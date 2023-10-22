@@ -1,0 +1,15 @@
+class Main {
+  fun run() {
+    $m.setStroke(10.0)
+    $m.setTimer(500)
+  }
+  fun timer(iv: Int) {
+    var x1 y1 x2 y2 : Double
+    x1 = $m.random($m.canvasWidth())
+    y1 = $m.random($m.canvasHeight())
+    x2 = $m.random($m.canvasWidth())
+    y2 = $m.random($m.canvasHeight())
+    $m.drawLine(x1, y1, x2, y2)
+    $m.drawUp()
+  }
+}

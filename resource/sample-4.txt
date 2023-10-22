@@ -1,0 +1,17 @@
+class CardItem {
+  var name gender : String
+  var age : Int
+  init(name: String, gender: String, age: Int) {
+    this.name = name
+    this.gender = gender
+    this.age = age
+  }
+  fun print() {
+    var text : String
+    text = name + ", " + gender + ", age=" + age.toString()
+    $m.print(text)
+  }
+}
+
+var card : CardItem("Sum", "male", 27)
+card.print()

@@ -1,0 +1,20 @@
+class Main {
+  fun run() {
+    $m.setTimer(500)
+  }
+  fun timer(iv: Int) {
+    var r, x, y: Double
+    r = $m.random(300)
+    x = $m.random($m.canvasWidth())
+    y = $m.random($m.canvasHeight())
+    $m.drawCircle(r, x, y)
+    $m.drawUp()
+  }
+  fun canvasChanged() {
+    var r g b: Double
+    r = $m.random(1)
+    g = $m.random(1)
+    b = $m.random(1)
+    $m.changeColor(r, g, b)
+  }
+}

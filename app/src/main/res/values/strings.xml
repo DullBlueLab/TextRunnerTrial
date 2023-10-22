@@ -1,0 +1,34 @@
+<resources>
+    <string name="app_name">Cormoo</string>
+    <string name="title_drawing">Drawing</string>
+    <string name="title_execute">Dump</string>
+    <string name="back_button">Back</string>
+    <string name="load_button">Load</string>
+    <string name="execute_button">Run</string>
+    <string name="clear_button">Clear</string>
+    <string name="error_unknown_operation">Unknown operation</string>
+    <string name="dump_button">Dump</string>
+    <string name="error_internal">Safety stop internal error</string>
+    <string name="error_not_match_argument">Not match argument type</string>
+    <string name="error_unknown_operator">Unknown operator</string>
+    <string name="error_illegal_condition">Irregular condition</string>
+    <string name="error_illegal_argument">Irregular argument</string>
+    <string name="error_illegal_method">Irregular method</string>
+    <string name="error_illegal_list_index">irregular list index</string>
+    <string name="error_out_of_range">Out of range</string>
+    <string name="error_unknown_const">Unknown const value</string>
+    <string name="error_unknown">Unknown</string>
+    <string name="error_syntax">Syntax error</string>
+    <string name="error_safety">Safety stop</string>
+    <string name="error_not_match_type">Unmatched data type</string>
+    <string name="error_method">Error method</string>
+    <string name="error_limit_over">Limit over</string>
+    <string name="error_bracket">Error bracket</string>
+    <string name="error_not_match_bracket">Not match bracket</string>
+    <string name="error_unload_source_file">Source file unloading</string>
+    <string name="setting_button">Setting</string>
+    <string name="setting_title">Setting</string>
+    <string name="label_timer_limit">"Timer minimum time (mm second, most minimum 20mm second)"</string>
+    <string name="label_loop_limit">loop limit (most minimum 100 count)</string>
+    <string name="error_out_of_size">Out of Size</string>
+</resources>
