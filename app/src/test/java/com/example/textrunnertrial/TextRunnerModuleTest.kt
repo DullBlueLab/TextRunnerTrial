@@ -121,6 +121,50 @@ private const val SOURCE_BREAK_2 =
             "\$m.print(check()) \n"
 private const val RESULT_BREAK_2 = "15\n"
 
+private const val SOURCE_CLASS =
+    "class Boss { " +
+            "  const text = \"Sum\" " +
+            "}" +
+            "class Parent : Boss {" +
+            "  fun print() {" +
+            "    \$m.print(text)" +
+            "  }" +
+            "}" +
+            "class Child: Parent {" +
+            "  var text : String" +
+            "  init() {" +
+            "    text = \"Mary\" " +
+            "  }" +
+            "  fun printChild() {" +
+            "    var text : String " +
+            "    text = \"Jane\"" +
+            "    \$m.print(text)" +
+            "  }" +
+            "  fun printThis() {" +
+            "    \$m.print(this.text)" +
+            "  }" +
+            "  fun printParent() {" +
+            "    super.print()" +
+            "  }" +
+            "}" +
+            "var obj : Child()" +
+            "obj.printChild()" +
+            "obj.printThis()" +
+            "obj.printParent()" +
+            ""
+private const val RESULT_CLASS = "Jane\nMary\nSum\n"
+
+private const val SOURCE_LIST =
+    "var box1 box2 : List " +
+            "box1 = listOf(\"aaa\", \"bbb\", \"ccc\") " +
+            "box1 += listOf(\"ddd\", \"eee\", \"fff\") " +
+            "box2.addList(listOf(\"AAA\", \"BBB\", \"CCC\")) " +
+            "box2.addList(listOf(\"DDD\", \"EEE\", \"FFF\")) " +
+            "\$m.print(box1[4]) " +
+            "box2[1].removeAt(1) " +
+            "\$m.print(box2[1][1]) "
+private const val RESULT_LIST = "eee\nFFF\n"
+
 class TextRunnerModuleTest {
 
     @Test
@@ -242,5 +286,27 @@ class TextRunnerModuleTest {
         viewModel.run()
         val result = viewModel.uiState.value.consoleText
         assertEquals(result, RESULT_BREAK_2)
+    }
+
+    @Test
+    fun testClass() {
+        val viewModel = RunnerViewModel()
+        viewModel.testSetup()
+
+        viewModel.uiState.value.sourceText = SOURCE_CLASS
+        viewModel.run()
+        val result = viewModel.uiState.value.consoleText
+        assertEquals(result, RESULT_CLASS)
+    }
+
+    @Test
+    fun testList() {
+        val viewModel = RunnerViewModel()
+        viewModel.testSetup()
+
+        viewModel.uiState.value.sourceText = SOURCE_LIST
+        viewModel.run()
+        val result = viewModel.uiState.value.consoleText
+        assertEquals(result, RESULT_LIST)
     }
 }

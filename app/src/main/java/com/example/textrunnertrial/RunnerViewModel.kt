@@ -86,13 +86,19 @@ class RunnerViewModel() : ViewModel() {
     }
 
     fun run() {
-        status.reset()
-        console.clear()
-        val parser = Parser(this)
-        val codes = parser.parse(_uiState.value.sourceText)
-        val dumpText = codes.dump()
+        var dumpText = ""
+        try {
+            status.reset()
+            console.clear()
+            val parser = Parser(this)
+            val codes = parser.parse(_uiState.value.sourceText)
+            dumpText = codes.dump()
 
-        if (status.errorCount == 0) runner.run(codes)
+            if (status.errorCount == 0) runner.run(codes)
+        }
+        catch (e: Exception) {
+            error("${Syntax.Errors.message(Syntax.Errors.Key.SAFETY)} ${e.message}")
+        }
 
         _uiState.update { state ->
             state.copy(
