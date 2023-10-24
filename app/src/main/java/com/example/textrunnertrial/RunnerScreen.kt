@@ -99,7 +99,11 @@ fun RunnerAppBar(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TextRunnerApp(viewModel: RunnerViewModel, launchLoadText: () -> Unit) {
+fun TextRunnerApp(
+    viewModel: RunnerViewModel,
+    launchLoadText: () -> Unit,
+    onLinkGuideClicked: () -> Unit
+) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
 
@@ -160,7 +164,7 @@ fun TextRunnerApp(viewModel: RunnerViewModel, launchLoadText: () -> Unit) {
             composable(route = RunnerScreen.Setting.name) {
                 val context = LocalContext.current
                 viewModel.setupSettingValue()
-                ScreenSetting(viewModel)
+                ScreenSetting(viewModel, onLinkGuideClicked = onLinkGuideClicked)
             }
         }
     }

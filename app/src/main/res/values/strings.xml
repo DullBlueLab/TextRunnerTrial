@@ -31,4 +31,9 @@
     <string name="label_timer_limit">"Timer minimum time (mm second, most minimum 20mm second)"</string>
     <string name="label_loop_limit">loop limit (most minimum 100 count)</string>
     <string name="error_out_of_size">Out of Size</string>
+    <string name="link_guide">browse guide</string>
+    <string name="guidance_url">https://dullbluelab.nobushi.jp/cormoo/cormoo_guide.html</string>
+    <string name="error_browse_guidance">Not browse guidance page</string>
+    <string name="title_info">Info</string>
+    <string name="label_guide">We provide guides on our homepage.</string>
 </resources>

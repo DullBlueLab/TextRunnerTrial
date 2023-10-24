@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -31,7 +32,8 @@ import com.example.textrunnertrial.RunnerViewModel
 @Composable
 fun ScreenSetting(
     viewModel: RunnerViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onLinkGuideClicked: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -67,5 +69,22 @@ fun ScreenSetting(
             modifier = Modifier.width(200.dp).align(Alignment.End).padding(8.dp),
             onValueChange = { viewModel.updateLoopLimit(it) }
         )
+        Spacer(modifier = Modifier.size(64.dp))
+        Text(
+            text = stringResource(id = R.string.title_info),
+            fontSize = 24.sp
+        )
+        Spacer(modifier = Modifier.size(32.dp))
+        Text(
+            text = stringResource(id = R.string.label_guide)
+        )
+        Button(
+            onClick = { onLinkGuideClicked() },
+            modifier = Modifier.align(Alignment.End).padding(8.dp),
+        ) {
+            Text(
+                text = stringResource(id = R.string.link_guide)
+            )
+        }
     }
 }

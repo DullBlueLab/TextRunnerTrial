@@ -1,5 +1,6 @@
 package com.example.textrunnertrial
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
@@ -7,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.res.stringResource
 import androidx.core.view.WindowCompat
 import com.example.textrunnertrial.logic.Syntax
 import com.example.textrunnertrial.ui.theme.TextRunnerTrialTheme
@@ -20,6 +22,8 @@ class MainActivity : ComponentActivity() {
     private var getContent: ActivityResultLauncher<String>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val guidanceUrl = getString(R.string.guidance_url)
+
         super.onCreate(savedInstanceState)
 
         if (runnerViewModel == null) {
@@ -34,7 +38,11 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             TextRunnerTrialTheme {
-                TextRunnerApp(runnerViewModel!!) { launchLoadText() }
+                TextRunnerApp(
+                    viewModel = runnerViewModel!!,
+                    launchLoadText = { launchLoadText() },
+                    onLinkGuideClicked = { openWebPage(guidanceUrl) }
+                )
             }
         }
     }
@@ -65,6 +73,18 @@ class MainActivity : ComponentActivity() {
 
     private fun launchLoadText() {
         getContent?.launch("text/plain")
+    }
+
+    private fun openWebPage(url: String) {
+        try {
+            val webpage: Uri = Uri.parse(url)
+            val intent = Intent(Intent.ACTION_VIEW, webpage)
+            startActivity(intent)
+        }
+        catch (e: Exception) {
+            val message = getString(R.string.error_browse_guidance)
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onStart() {
