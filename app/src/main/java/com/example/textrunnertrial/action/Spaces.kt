@@ -23,7 +23,6 @@ class Spaces {
         fun objects() = objects
         fun set(objects: Objects.Common?) { this.objects = objects }
         fun isReturn() = (objects != null)
-        fun setVoids() { this.objects = Objects.Voids() }
         fun clear() { objects = null }
     }
     val returns = Returns()

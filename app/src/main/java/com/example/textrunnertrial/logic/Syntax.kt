@@ -6,7 +6,7 @@ object Syntax {
         enum class Type {
             WORD_START, WORDS, NUMBER_START, NUMBERS, SIGN,
             BRACKET_START, BRACKET_END, STRING_BRACKET,
-            ESCAPE, COMMA, NON
+            ESCAPE, COMMA
         }
         private val map = mapOf<Type, String>(
             Type.WORD_START to "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$#_",
@@ -28,8 +28,6 @@ object Syntax {
 
         val LIST_DATA_BRACKET_START = LIST_DATA_BRACKET[0]
         val LIST_DATA_BRACKET_END = LIST_DATA_BRACKET[1]
-        val LIST_INDEX_BRACKET_START = LIST_INDEX_BRACKET[0]
-        val LIST_INDEX_BRACKET_END = LIST_INDEX_BRACKET[1]
 
         const val WORD_DIV_SIGN = ":"
         const val COMMA = ","
@@ -179,7 +177,7 @@ object Syntax {
         }
 
         fun codeNO(word: String): Int {
-            var code: Int = 0
+            var code = 0
             for (sets in lists) {
                 if (sets.word == word) {
                     code = sets.codeNO
@@ -207,7 +205,7 @@ object Syntax {
             INC_FRONT, INC_REAR, DEC_FRONT, DEC_REAR,
             NOT,
             ADD, SUB, MULTI, DIV, MOD,
-            PLUS, MINUS,
+            MINUS, // PLUS,
             MORE_SMALL, MORE_LARGE,
             SMALL, LARGE,
             EQUAL, NOT_EQUAL,
@@ -268,13 +266,6 @@ object Syntax {
         fun setting(sign: String): Setting? {
             defines.forEach { (_, set) ->
                 if (set.sign == sign) return set
-            }
-            return null
-        }
-
-        fun key(sign: String): Type? {
-            for (sets in defines) {
-                if (sets.value.sign == sign) return sets.key
             }
             return null
         }

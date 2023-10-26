@@ -2,13 +2,11 @@ package com.example.textrunnertrial.logic
 
 import com.example.textrunnertrial.Errors
 import com.example.textrunnertrial.RunnerViewModel
-import com.example.textrunnertrial.ui.Console
 
 class Parser(
     private val vm: RunnerViewModel
 ) {
     private val status: RunnerViewModel.Status = vm.status()
-    private var console: Console = vm.console()
 
     fun parse(codeString: String): CodeUnit {
         val codes = CodeUnit()

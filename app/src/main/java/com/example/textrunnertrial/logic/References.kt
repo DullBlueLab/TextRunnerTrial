@@ -1,6 +1,5 @@
 package com.example.textrunnertrial.logic
 
-import com.example.textrunnertrial.action.Objects
 import com.example.textrunnertrial.action.Spaces
 
 class References {
@@ -26,10 +25,7 @@ class References {
 
         fun type() = type
         fun word() = word
-        fun returns() = returns
-        fun arguments() = arguments
         fun codes() = codeRef
-        fun returnNames(): Spaces.Names = Spaces.Names(returns)
 
         fun references(): Lists? =
             if (type == Type.CLASS) (codeRef as CodeBlock.ClassDef).reference()
@@ -96,7 +92,6 @@ class References {
 
         fun lists() = lists
         fun size(): Int = lists.size
-        fun hierarchyWords(): Spaces.Names? = hierarchyWords
         fun spaceName(): Spaces.Names = hierarchyWords ?: Spaces.Names()
 
         private fun hierarchyText(): String {
@@ -106,17 +101,6 @@ class References {
                 text += it
             }
             return text
-        }
-
-        fun search(word: String): Sets? {
-            var match: Sets? = null
-            for (seek in lists) {
-                if (seek.word() == word) {
-                    match = seek
-                    break
-                }
-            }
-            return match
         }
 
         fun search(type: Type, word: String): Sets? {

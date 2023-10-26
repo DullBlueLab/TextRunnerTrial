@@ -33,7 +33,7 @@ class CodeBlock {
         open fun child(index: Int): Common? = null
         open fun text() = ""
 
-        open fun findListAndRun(process: (CodeBlock.Lists) -> Unit) {}
+        open fun findListAndRun(process: (Lists) -> Unit) {}
 
         fun matchCharType(char: Char, type: Syntax.Chars.Type)
             = (char != ' ' && Syntax.Chars.isMatch(char, type))
@@ -98,7 +98,6 @@ class CodeBlock {
 
         fun lists(): Lists? = lists
         fun chars() = strings
-        fun changeChars(chars: String) { strings = chars }
 
         constructor(chars: String, lists: Lists, lineNO: Int) : this(chars, lineNO) {
             this.lists = lists
@@ -124,7 +123,7 @@ class CodeBlock {
             "${lists?.dump("$shift  ")}" +
             "$shift[close : $strings] \n"
 
-        override fun findListAndRun(process: (CodeBlock.Lists) -> Unit) {
+        override fun findListAndRun(process: (Lists) -> Unit) {
             lists?.findListAndRun(process)
         }
     }
@@ -166,7 +165,7 @@ class CodeBlock {
             this.lineNO = values.lineNO()
         }
 
-        override fun findListAndRun(process: (CodeBlock.Lists) -> Unit) {
+        override fun findListAndRun(process: (Lists) -> Unit) {
             values?.findListAndRun(process)
         }
 
@@ -214,7 +213,7 @@ class CodeBlock {
                 else -> null
             }
         }
-        override fun findListAndRun(process: (CodeBlock.Lists) -> Unit) {
+        override fun findListAndRun(process: (Lists) -> Unit) {
             subject?.findListAndRun(process)
             argument?.findListAndRun(process)
         }
@@ -256,7 +255,7 @@ class CodeBlock {
             }
         }
 
-        override fun findListAndRun(process: (CodeBlock.Lists) -> Unit) {
+        override fun findListAndRun(process: (Lists) -> Unit) {
             argument?.findListAndRun(process)
         }
 
@@ -406,7 +405,6 @@ class CodeBlock {
 
         override fun name(): String = strings
         final override fun setName(name: String) { strings = name }
-        fun reference() = references
         fun arguments() = arguments
         fun statement() = statement
 
@@ -760,7 +758,6 @@ class CodeBlock {
         private var classNameSpace: Spaces.Names? = null
 
         fun reference() = references
-        fun statement() = statement
 
         constructor(lists: Lists, index: Int) : this() {
             val codeNO = Syntax.Reserved.codeNO(Syntax.Reserved.Key.CLASS)

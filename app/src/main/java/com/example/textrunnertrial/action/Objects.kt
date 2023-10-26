@@ -24,8 +24,8 @@ import kotlin.math.tan
 class Objects {
 
     enum class Type {
-        INSTANCE, METHOD, BOOLEANS,
-        INTS, DOUBLES, STRINGS,
+        INSTANCE, // METHOD,
+        INTS, DOUBLES, STRINGS, BOOLEANS,
         VOIDS, ERRORS,
         LISTS,
     }

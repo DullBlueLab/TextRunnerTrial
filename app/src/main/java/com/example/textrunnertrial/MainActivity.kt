@@ -9,7 +9,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.WindowCompat
-import com.example.textrunnertrial.logic.Syntax
 import com.example.textrunnertrial.ui.theme.TextRunnerTrialTheme
 import java.io.BufferedReader
 import java.io.InputStreamReader

@@ -12,8 +12,6 @@ class WordList {
         return words.indexOf(word)
     }
 
-    fun getWord(number: Int): String = (words[number] ?: "")
-
     fun clear() {
         words.clear()
         words.add("")

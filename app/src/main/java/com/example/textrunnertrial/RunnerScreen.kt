@@ -15,10 +15,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
@@ -34,8 +32,6 @@ import com.example.textrunnertrial.ui.ScreenSetting
 enum class RunnerScreen {
     Home, Drawing, Execute, Setting
 }
-
-private val screenListener: NavController.OnDestinationChangedListener? = null
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -128,8 +124,6 @@ fun TextRunnerApp(
             )
         }
     ) { innerPadding ->
-        val uiState by viewModel.uiState.collectAsState()
-
         NavHost(
             navController = navController,
             startDestination = RunnerScreen.Home.name,
@@ -153,15 +147,12 @@ fun TextRunnerApp(
                 )
             }
             composable(route = RunnerScreen.Drawing.name) {
-                val context = LocalContext.current
                 ScreenDrawing(viewModel)
             }
             composable(route = RunnerScreen.Execute.name) {
-                val context = LocalContext.current
                 ScreenExecute(viewModel)
             }
             composable(route = RunnerScreen.Setting.name) {
-                val context = LocalContext.current
                 viewModel.setupSettingValue()
                 ScreenSetting(viewModel, onLinkGuideClicked = onLinkGuideClicked)
             }

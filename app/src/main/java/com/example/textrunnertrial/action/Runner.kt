@@ -208,7 +208,7 @@ class Runner(
     }
 
     private fun executeBlock(block: CodeBlock.Common) : Objects.Common {
-        var result: Objects.Common? = null
+        val result: Objects.Common?
         try {
             result = when (block.type()) {
                 CodeBlock.Type.WORD -> {
@@ -618,10 +618,5 @@ class Runner(
     fun cancelTimer() {
         timer?.cancel()
         timer = null
-    }
-
-    fun restartTimer() {
-        timer?.cancel()
-        setTimerTask(vm.status().timerCount)
     }
 }
