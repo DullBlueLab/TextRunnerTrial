@@ -1,10 +1,9 @@
 package com.example.textrunnertrial.action
 
+import com.example.textrunnertrial.Errors
 import com.example.textrunnertrial.logic.CodeBlock
 import com.example.textrunnertrial.logic.References
 import com.example.textrunnertrial.logic.Syntax
-
-private fun errorText(key: Syntax.Errors.Key) = Syntax.Errors.message(key)
 
 class Spaces {
     private val groundVarList: VarLists = VarLists()
@@ -97,7 +96,7 @@ class Spaces {
         val argList: CodeBlock.ArgumentList? = funDef.arguments()
         if (argList != null && argList.size() > 0) {
             result = thisVarList?.setArguments(argList, arguments)
-                ?: "${errorText(Syntax.Errors.Key.INTERNAL)} updateFunVar"
+                ?: throw Errors.Syntax(Errors.Key.INTERNAL, "updateFunVar")
         }
         return result
     }
@@ -117,24 +116,29 @@ class Spaces {
         return if (referenceList != null) {
             if (isMember)
                 thisObject?.members()?.appendVarObjects(name, className, referenceList!!)
-                    ?: errorObj(Syntax.Errors.Key.UNKNOWN, " create var")
+                    ?: throw Errors.Syntax(Errors.Key.UNKNOWN, "create var")
             else
                 thisVarList?.appendVarObjects(name, className, referenceList!!)
-                    ?: errorObj(Syntax.Errors.Key.UNKNOWN, " create var")
+                    ?: throw Errors.Syntax(Errors.Key.UNKNOWN, " create var")
         }
-        else errorObj(Syntax.Errors.Key.SAFETY, " Spaces.createVarObject")
+        else throw Errors.Logic("Spaces.createVarObject")
     }
 
     fun createConst(constDef: CodeBlock.ConstDef, isMember: Boolean): Objects.Common {
         return if (isMember) {
             if (referenceList != null)
                 thisObject?.members()?.appendConstValue(constDef)
-                    ?: errorObj(Syntax.Errors.Key.SAFETY, " Spaces.createConst")
-            else errorObj(Syntax.Errors.Key.SAFETY, " Spaces.createConst")
+                    ?: throw Errors.Logic("Spaces.createConst")
+            else throw Errors.Logic("Spaces.createConst")
         }
         else
             thisVarList?.appendConstValue(constDef)
-                ?: errorObj(Syntax.Errors.Key.SAFETY, " Spaces.createConst")
+                ?: throw Errors.Logic("Spaces.createConst")
+    }
+
+    fun findClassDef(name: String): CodeBlock.Common? {
+        val set = referenceList?.search(References.Type.CLASS, name)
+        return set?.codes()
     }
 
     data class VarSets(
@@ -191,7 +195,7 @@ class Spaces {
 
         fun appendConstValue(codes: CodeBlock.ConstDef): Objects.Common {
             var result: Objects.Common? = null
-            val block = codes.value() ?: return errorObj(Syntax.Errors.Key.SAFETY, " appendConstValue")
+            val block = codes.value() ?: throw Errors.Logic("appendConstValue")
             val name = codes.name()
 
             when (block.type()) {
@@ -209,26 +213,22 @@ class Spaces {
                     val objects = (block as CodeBlock.ListValue).objects()
                     objects?.let { result = Objects.Lists(it) }
                 }
-                else -> {
-                    return errorObj(Syntax.Errors.Key.UNKNOWN_CONST, "")
-                }
+                else -> throw Errors.Syntax(Errors.Key.UNKNOWN_CONST)
             }
             result?.let { lists.add(VarSets(name, it.type(), classes = null, it)) }
-            return result ?: errorObj(Syntax.Errors.Key.UNKNOWN_CONST, "")
+            return result ?: throw Errors.Syntax(Errors.Key.UNKNOWN_CONST)
         }
 
         fun setArguments(
             argCodes: CodeBlock.ArgumentList, argValues: MutableList<Objects.Common> ): String{
 
-            if (argCodes.size() != argValues.size) {
-                return errorText(Syntax.Errors.Key.ILLEGAL_ARGUMENT)
-            }
+            if (argCodes.size() != argValues.size) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT)
+
             var index = 0
             while (index < argCodes.size()) {
 
                 val codeDef = argCodes.item(index)
-                val codeWord = codeDef.name()?.text()
-                    ?: return errorText(Syntax.Errors.Key.ILLEGAL_ARGUMENT)
+                val codeWord = codeDef.name()?.text() ?: throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT)
                 val codeClassName = Names(codeDef.className())
 
                 val value = argValues[index]
@@ -238,8 +238,7 @@ class Spaces {
                             (value as Objects.Instances).classNames()
                     else null
 
-                if (!value.matchType(codeClassName))
-                    return errorText(Syntax.Errors.Key.NOT_MATCH_ARGUMENT)
+                if (!value.matchType(codeClassName)) throw Errors.Syntax(Errors.Key.NOT_MATCH_ARGUMENT)
 
                 lists.add(VarSets(codeWord, valueType, valueClassName, value))
                 index ++

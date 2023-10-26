@@ -3,10 +3,9 @@ package com.example.textrunnertrial.action
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.vector.VectorProperty
+import com.example.textrunnertrial.Errors
 import com.example.textrunnertrial.RunnerViewModel
 import com.example.textrunnertrial.logic.Syntax
 import java.lang.Math.random
@@ -29,10 +28,6 @@ class Machine(
 
     companion object {
         const val NAME = "\$m"
-
-        private fun errorArgs(name: String) = errorObj(Syntax.Errors.Key.ILLEGAL_ARGUMENT, " $name")
-        private fun errorMethod(name: String) = errorObj(Syntax.Errors.Key.ILLEGAL_METHOD, " $name")
-
         private val MW = Syntax.Method.Word
     }
 
@@ -60,13 +55,13 @@ class Machine(
             MW.CANCEL_TIMER -> cancelTimer()
             MW.TAP_ACTION -> tapAction(args)
 
-            else -> errorMethod(method)
+            else -> throw Errors.Syntax(Errors.Key.ILLEGAL_METHOD)
         }
         return result
     }
 
     private fun printf(args: MutableList<Objects.Common>): Objects.Common {
-        if (args.size != 1) return errorArgs(MW.PRINT)
+        if (args.size != 1) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.PRINT)
 
         val strings = args[0].toStrings()
         vm.console().append(strings.valueString())
@@ -82,7 +77,7 @@ class Machine(
     }
 
     private fun drawCircle(args: MutableList<Objects.Common>) : Objects.Common {
-        if (args.size != 3) return errorArgs(MW.DRAW_CIRCLE)
+        if (args.size != 3) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.DRAW_CIRCLE)
 
         val radius = if (args[0].isValues())
                 (args[0] as Objects.Values).valueDouble().toFloat() else null
@@ -91,7 +86,8 @@ class Machine(
         val centerTop = if (args[2].isValues())
             (args[2] as Objects.Values).valueDouble().toFloat() else null
 
-        if (radius == null || centerLeft == null || centerTop == null) return errorArgs(MW.DRAW_CIRCLE)
+        if (radius == null || centerLeft == null || centerTop == null)
+            throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.DRAW_CIRCLE)
 
         val offset = Offset(centerLeft, centerTop)
         drawingQueue.drawCircle(currents.color, radius, offset, currents.alpha)
@@ -100,7 +96,7 @@ class Machine(
     }
 
     private fun drawLine(args: MutableList<Objects.Common>) : Objects.Common {
-        if (args.size != 4) return errorArgs(MW.DRAW_LINE)
+        if (args.size != 4) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.DRAW_LINE)
 
         val startLeft = if (args[0].isValues())
             (args[0] as Objects.Values).valueDouble().toFloat() else null
@@ -112,7 +108,7 @@ class Machine(
             (args[3] as Objects.Values).valueDouble().toFloat() else null
 
         if (startLeft == null || startTop == null || endLeft == null || endTop == null)
-            return errorArgs(MW.DRAW_LINE)
+            throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.DRAW_LINE)
 
         val start = Offset(startLeft, startTop)
         val end = Offset(endLeft, endTop)
@@ -121,7 +117,7 @@ class Machine(
     }
 
     private fun drawRect(args: MutableList<Objects.Common>) : Objects.Common {
-        if (args.size != 4) return errorArgs(MW.DRAW_RECT)
+        if (args.size != 4) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.DRAW_RECT)
 
         val left = if (args[0].isValues())
             (args[0] as Objects.Values).valueDouble().toFloat() else null
@@ -133,7 +129,7 @@ class Machine(
             (args[3] as Objects.Values).valueDouble().toFloat() else null
 
         if (left == null || top == null || width == null || height == null)
-            return errorArgs(MW.DRAW_RECT)
+            throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.DRAW_RECT)
 
         val leftTop = Offset(left, top)
         val size = Size(width, height)
@@ -142,7 +138,7 @@ class Machine(
     }
 
     private fun fillCanvas(args: MutableList<Objects.Common>) : Objects.Common {
-        if (args.size != 3) return errorArgs(MW.FILL_CANVAS)
+        if (args.size != 3) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.FILL_CANVAS)
 
         val red = if (args[0].isValues())
             (args[0] as Objects.Values).valueDouble().toFloat() else null
@@ -151,7 +147,8 @@ class Machine(
         val blue = if (args[2].isValues())
             (args[2] as Objects.Values).valueDouble().toFloat() else null
 
-        if (red == null || green == null || blue == null) return errorArgs(MW.FILL_CANVAS)
+        if (red == null || green == null || blue == null)
+            throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.FILL_CANVAS)
 
         val color = Color(red, green, blue)
         val leftTop = Offset(0f, 0f)
@@ -172,7 +169,7 @@ class Machine(
     }
 
     private fun changeColor(args: MutableList<Objects.Common>) : Objects.Common {
-        if (args.size != 3) return errorArgs(MW.CHANGE_COLOR)
+        if (args.size != 3) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.CHANGE_COLOR)
 
         val red = if (args[0].isValues())
             (args[0] as Objects.Values).valueDouble().toFloat() else null
@@ -181,54 +178,55 @@ class Machine(
         val blue = if (args[2].isValues())
             (args[2] as Objects.Values).valueDouble().toFloat() else null
 
-        if (red == null || green == null || blue == null) return errorArgs(MW.CHANGE_COLOR)
+        if (red == null || green == null || blue == null)
+            throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.CHANGE_COLOR)
 
         currents.color = Color(red, green, blue)
         return voids
     }
 
     private fun changeStroke(args: MutableList<Objects.Common>) : Objects.Common {
-        if (args.size != 1) return errorArgs(MW.CHANGE_STROKE)
+        if (args.size != 1) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.CHANGE_STROKE)
 
         val width = if (args[0].isValues())
             (args[0] as Objects.Values).valueDouble().toFloat() else null
 
-        if (width == null) return errorArgs(MW.CHANGE_STROKE)
+        if (width == null) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.CHANGE_STROKE)
 
         currents.strokeWidth = width
         return voids
     }
 
     private fun changeAlpha(args: MutableList<Objects.Common>) : Objects.Common {
-        if (args.size != 1) return errorArgs(MW.CHANGE_ALPHA)
+        if (args.size != 1) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.CHANGE_ALPHA)
 
         val alpha = if (args[0].isValues())
             (args[0] as Objects.Values).valueDouble().toFloat() else null
 
-        if (alpha == null) return errorArgs(MW.CHANGE_ALPHA)
+        if (alpha == null) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.CHANGE_ALPHA)
 
         currents.alpha = alpha
         return voids
     }
 
     private fun getRandom(args: MutableList<Objects.Common>) : Objects.Common {
-        if (args.size != 1) return errorArgs(MW.RANDOM)
+        if (args.size != 1) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.RANDOM)
 
         val max = if (args[0].isValues())
             (args[0] as Objects.Values).valueDouble() else null
 
-        if (max == null) return errorArgs(MW.RANDOM)
+        if (max == null) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.RANDOM)
 
         return Objects.Doubles(random() * max)
     }
 
     private fun setTimer(args: MutableList<Objects.Common>) : Objects.Common {
-        if (args.size != 1) return errorArgs(MW.SET_TIMER)
+        if (args.size != 1) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.SET_TIMER)
 
         var delay = if (args[0].isValues())
             (args[0] as Objects.Values).valueInt().toLong() else null
 
-        if (delay == null) return errorArgs(MW.SET_TIMER)
+        if (delay == null) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.SET_TIMER)
 
         if (delay < vm.setting().timerLimit) delay = vm.setting().timerLimit
         status.timerCount = delay
@@ -241,12 +239,12 @@ class Machine(
     }
 
     private fun tapAction(args: MutableList<Objects.Common>) : Objects.Common {
-        if (args.size != 1) return errorArgs(MW.TAP_ACTION)
+        if (args.size != 1) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.TAP_ACTION)
 
         val flag = if (args[0].isValues())
             (args[0] as Objects.Values).valueBoolean() else null
 
-        if (flag == null) return errorArgs(MW.TAP_ACTION)
+        if (flag == null) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.TAP_ACTION)
         status.flagTapAction = flag
         return voids
     }

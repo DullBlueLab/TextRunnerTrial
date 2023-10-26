@@ -1,6 +1,7 @@
 package com.example.textrunnertrial.action
 
 import androidx.core.text.isDigitsOnly
+import com.example.textrunnertrial.Errors
 import com.example.textrunnertrial.logic.CodeBlock
 import com.example.textrunnertrial.logic.References
 import com.example.textrunnertrial.logic.Syntax
@@ -19,9 +20,6 @@ import kotlin.math.round
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.math.tan
-
-fun errorObj(key: Syntax.Errors.Key, text: String): Objects.Errors =
-    Objects.Errors(Syntax.Errors.message(key) + text)
 
 class Objects {
 
@@ -89,12 +87,13 @@ class Objects {
 
         override fun execute(method: String, arguments: MutableList<Common>): Common {
             val result: Common? = super.execute(method, arguments)
-            return result ?: errorObj(Syntax.Errors.Key.METHOD, " $method instance ${typeWord()}")
+            return result ?: throw Errors.Syntax("${Errors.message(Errors.Key.METHOD)} $method instance ${typeWord()}")
         }
 
         fun set(dst: Common): Common {
             if (dst.type() != Type.INSTANCE)
-                return errorObj(Syntax.Errors.Key.NOT_MATCH_TYPE, " method set instance ${typeWord()}")
+                throw Errors.Syntax("${Errors.message(Errors.Key.NOT_MATCH_TYPE)} method set instance ${typeWord()}")
+
             val instances = dst as Instances
 
             val dstClass = instances.classes
@@ -259,7 +258,7 @@ class Objects {
             }
             else result = null
 
-            return result ?: errorObj(Syntax.Errors.Key.METHOD, " $method type Int")
+            return result ?: throw Errors.Syntax("${Errors.message(Errors.Key.METHOD)} $method type Int")
         }
 
         override fun set(dst: Values) : Values {
@@ -364,7 +363,7 @@ class Objects {
             }
             else result = null
 
-            return result ?: errorObj(Syntax.Errors.Key.METHOD, " $method type Double")
+            return result ?: throw Errors.Syntax("${Errors.message(Errors.Key.METHOD)} $method type Double")
         }
 
         override fun set(dst: Values) : Values {
@@ -475,7 +474,7 @@ class Objects {
                 }
                 else result = null
             }
-            return result ?: errorObj(Syntax.Errors.Key.METHOD, " $method data type String")
+            return result ?: throw Errors.Syntax("${Errors.message(Errors.Key.METHOD)} $method data type String")
         }
 
         override fun set(dst: Values) : Values {
@@ -491,7 +490,8 @@ class Objects {
         private fun charAt(dst: Values): Common {
             val index = dst.valueInt()
             if (index < 0 || value.length <= index)
-                return errorObj(Syntax.Errors.Key.OUT_OF_SIZE, " charAt")
+                throw Errors.Syntax("${Errors.message(Errors.Key.OUT_OF_SIZE)} charAt")
+
             return Strings(value[index].toString())
         }
 
@@ -511,7 +511,7 @@ class Objects {
             val len = value.length
 
             if ((bv < 0 || len <= bv) || (ev < 0 || len <= ev) || (bv > ev))
-                return errorObj(Syntax.Errors.Key.OUT_OF_SIZE, " substring")
+                throw Errors.Syntax("${Errors.message(Errors.Key.OUT_OF_SIZE)} substring")
 
             return Strings(value.substring(bv, ev))
         }
@@ -572,7 +572,7 @@ class Objects {
                 }
                 else result = null
             }
-            return result ?: errorObj(Syntax.Errors.Key.METHOD, " $method data type Boolean")
+            return result ?: throw Errors.Syntax("${Errors.message(Errors.Key.METHOD)} $method data type Boolean")
         }
 
         override fun set(dst: Values) : Values {
@@ -600,27 +600,8 @@ class Objects {
         override fun typeWord(): String = Syntax.Reserved.Word.VOID
 
         override fun execute(method: String, arguments: MutableList<Common>): Common {
-            return errorObj(Syntax.Errors.Key.METHOD, " $method, Void cannot be executed")
+            throw Errors.Syntax("${Errors.message(Errors.Key.METHOD)} $method, Void cannot be executed")
         }
-    }
-
-    class Errors() : Common(Type.ERRORS) {
-        private var message: String = ""
-
-        constructor(message: String) : this() {
-            this.message = message
-        }
-
-        fun message() = message
-        fun addText(text: String) { message += text}
-
-        override fun execute(method: String, arguments: MutableList<Common>): Common {
-            return errorObj(Syntax.Errors.Key.METHOD, " $method, at Errors object")
-        }
-
-        override fun toStrings(): Strings = Strings("[error] : $message")
-        override fun isValues(): Boolean = false
-        override fun typeWord(): String = "Error"
     }
 
     class Lists() : Common(Type.LISTS) {
@@ -645,53 +626,55 @@ class Objects {
 
         override fun execute(method: String, arguments: MutableList<Common>) : Common {
             var result: Common? = null
-            if (arguments.size == 2) {
-                val dstA = arguments[0]
-                val dstB = arguments[1]
-                result = when (method) {
-                    MW.APPEND -> append(dstA, dstB)
-                    else -> null
+            when {
+                (arguments.size == 2) -> {
+                    val dstA = arguments[0]
+                    val dstB = arguments[1]
+                    result = when (method) {
+                        MW.APPEND -> append(dstA, dstB)
+                        else -> null
+                    }
+                }
+                (arguments.size == 1) -> {
+                    val dst = arguments[0]
+                    result = when (method) {
+                        MW.SET -> set(dst)
+                        MW.ADD_SET -> addSet(dst)
+                        MW.SUB_SET -> subSet(dst)
+                        MW.ADD -> add(dst)
+                        MW.SUB -> sub(dst)
+                        MW.ITEM -> item(dst)
+                        MW.REMOVE_AT -> removeAt(dst)
+                        MW.ADD_LIST -> addList(dst)
+                        else -> null
+                    }
+                }
+                (arguments.size == 0) -> {
+                    result = when (method) {
+                        MW.SIZE -> size()
+                        MW.CLEAR -> clear()
+                        else -> null
+                    }
                 }
             }
-            else if (arguments.size == 1) {
-                val dst = arguments[0]
-                result = when (method) {
-                    MW.SET -> set(dst)
-                    MW.ADD_SET -> addSet(dst)
-                    MW.SUB_SET -> subSet(dst)
-                    MW.ADD -> add(dst)
-                    MW.SUB -> sub(dst)
-                    MW.ITEM -> item(dst)
-                    MW.REMOVE_AT -> removeAt(dst)
-                    MW.ADD_LIST -> addList(dst)
-                    else -> null
-                }
-            }
-            else if (arguments.size == 0) {
-                result = when (method) {
-                    MW.SIZE -> size()
-                    MW.CLEAR -> clear()
-                    else -> null
-                }
-            }
-            return result ?: errorObj(Syntax.Errors.Key.METHOD, " $method data type List")
+            return result ?: throw Errors.Syntax("${Errors.message(Errors.Key.METHOD)} $method data type List")
         }
 
         private fun set(dst: Common): Common {
             when (dst.type()) {
                 Type.LISTS -> list = (dst as Lists).list
-                else -> return errorObj(Syntax.Errors.Key.NOT_MATCH_TYPE, " List object")
+                else -> throw Errors.Syntax("${Errors.message(Errors.Key.NOT_MATCH_TYPE)} List object")
             }
             return dst
         }
 
         private fun item(dst: Common): Common {
             if (dst.type() != Type.INTS)
-                return errorObj(Syntax.Errors.Key.ILLEGAL_LIST_INDEX, "")
+                throw Errors.Syntax(Errors.message(Errors.Key.ILLEGAL_LIST_INDEX))
 
             val index = (dst as Ints).valueInt()
             if (index < 0 || list.size <= index)
-                return errorObj(Syntax.Errors.Key.OUT_OF_RANGE, " list index")
+                throw Errors.Syntax("${Errors.message(Errors.Key.OUT_OF_RANGE)} list index")
 
             return list[index]
         }
@@ -734,7 +717,7 @@ class Objects {
         }
 
         private fun append(index: Common, objects: Common): Common {
-            if (!index.isValues()) return errorObj(Syntax.Errors.Key.ILLEGAL_ARGUMENT, "")
+            if (!index.isValues()) throw Errors.Syntax(Errors.message(Errors.Key.ILLEGAL_ARGUMENT))
             val number = (index as Values).valueInt()
 
             if (list.size == number) {
@@ -744,20 +727,20 @@ class Objects {
                 list.add(number, objects)
             }
             else {
-                return errorObj(Syntax.Errors.Key.OUT_OF_RANGE, "")
+                throw Errors.Syntax(Errors.message(Errors.Key.OUT_OF_RANGE))
             }
             return Lists(list)
         }
 
         private fun removeAt(index: Common): Common {
-            if (!index.isValues()) return errorObj(Syntax.Errors.Key.ILLEGAL_ARGUMENT, "")
+            if (!index.isValues()) throw Errors.Syntax(Errors.message(Errors.Key.ILLEGAL_ARGUMENT))
             val number = (index as Values).valueInt()
 
             if (0 <= number && number < list.size) {
                 list.removeAt(number)
             }
             else {
-                return errorObj(Syntax.Errors.Key.OUT_OF_RANGE, "")
+                throw Errors.Syntax(Errors.message(Errors.Key.OUT_OF_RANGE))
             }
             return Lists(list)
         }

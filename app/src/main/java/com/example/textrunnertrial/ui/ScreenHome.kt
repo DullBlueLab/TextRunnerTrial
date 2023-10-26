@@ -23,7 +23,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.textrunnertrial.RunnerViewModel
 import com.example.textrunnertrial.R
-import com.example.textrunnertrial.RunnerScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

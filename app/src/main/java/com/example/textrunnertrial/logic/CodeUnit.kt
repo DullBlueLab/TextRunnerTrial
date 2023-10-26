@@ -15,6 +15,12 @@ class CodeUnit {
         blocks?.makeReference(reference)
     }
 
+    fun clear() {
+        blocks = null
+        reference.clear()
+        wordList.clear()
+    }
+
     fun dump(): String {
         return blocks?.dump("") + reference.dump()
     }

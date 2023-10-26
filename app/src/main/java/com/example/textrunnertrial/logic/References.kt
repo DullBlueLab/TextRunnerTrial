@@ -162,5 +162,11 @@ class References {
             }
             return text
         }
+
+        fun clear() {
+            lists.clear()
+            hierarchyWords = null
+            parent = null
+        }
     }
 }

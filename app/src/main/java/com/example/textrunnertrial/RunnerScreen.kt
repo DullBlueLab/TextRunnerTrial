@@ -26,7 +26,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.textrunnertrial.R
 import com.example.textrunnertrial.ui.ScreenDrawing
 import com.example.textrunnertrial.ui.ScreenHome
 import com.example.textrunnertrial.ui.ScreenExecute

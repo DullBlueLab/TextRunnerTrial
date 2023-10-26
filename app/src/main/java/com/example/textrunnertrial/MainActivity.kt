@@ -8,7 +8,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.res.stringResource
 import androidx.core.view.WindowCompat
 import com.example.textrunnertrial.logic.Syntax
 import com.example.textrunnertrial.ui.theme.TextRunnerTrialTheme
@@ -32,7 +31,7 @@ class MainActivity : ComponentActivity() {
         }
 
         registerLoadText(this)
-        Syntax.Errors.loadResource(this)
+        Errors.loadResource(this)
         destinationListener = null
 
         WindowCompat.setDecorFitsSystemWindows(window, false)

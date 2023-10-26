@@ -1,9 +1,8 @@
 package com.example.textrunnertrial.logic
 
+import com.example.textrunnertrial.Errors
 import com.example.textrunnertrial.action.Objects
 import com.example.textrunnertrial.action.Spaces
-
-private fun err(key: Syntax.Errors.Key) = Syntax.Errors.message(key)
 
 class CodeBlock {
 
@@ -18,7 +17,6 @@ class CodeBlock {
         const val SUBJECT = 0
         const val ARGUMENT = 1
 
-        private val ED = Syntax.Errors
     }
 
     abstract class Common(
@@ -26,8 +24,6 @@ class CodeBlock {
         protected var strings: String = "",
         protected var lineNO: Int = 0
     ) {
-        protected var errorText = ""
-
         fun type() = type
         fun lineNO() = lineNO
         fun strings() = strings
@@ -36,7 +32,6 @@ class CodeBlock {
         open fun setName(name: String) {}
         open fun child(index: Int): Common? = null
         open fun text() = ""
-        open fun errorText() = errorText
 
         open fun findListAndRun(process: (CodeBlock.Lists) -> Unit) {}
 
@@ -184,11 +179,7 @@ class CodeBlock {
         private var argument: Common? = null
 
         constructor(lists: Lists, index: Int, def: Syntax.Operator.Setting) : this() {
-            val block = lists.block(index)
-            if (block == null) {
-                errorText = "${err(Syntax.Errors.Key.SAFETY)} CodeBlock.ObjectRef"
-                return
-            }
+            val block = lists.block(index) ?: throw Errors.Logic("CodeBlock.ObjectRef")
             lineNO = block.lineNO()
 
             subject =
@@ -212,7 +203,7 @@ class CodeBlock {
                 strings = block.strings()
             }
             if ((def.prev && subject == null) || (def.next && argument == null)) {
-                errorText = "${err(Syntax.Errors.Key.SYNTAX)} line:$lineNO"
+                throw Errors.Syntax(Errors.Key.SYNTAX, lineNO = lineNO)
             }
         }
 
@@ -246,18 +237,11 @@ class CodeBlock {
         override fun name(): String = strings
 
         constructor(lists: Lists, index: Int) : this() {
-            val block = lists.block(index)
-            if (block == null) {
-                errorText = "${err(Syntax.Errors.Key.SAFETY)} CodeBlock.FunCall"
-                return
-            }
+            val block = lists.block(index) ?: throw Errors.Logic("CodeBlock.FunCall")
+
             lineNO = block.lineNO()
             strings = block.name()
-            argument = lists.block(index + 1)
-
-            if (argument == null) {
-                errorText = "${err(Syntax.Errors.Key.SYNTAX)} line:$lineNO"
-            }
+            argument = lists.block(index + 1) ?: throw Errors.Syntax(Errors.Key.SYNTAX, lineNO = lineNO)
         }
 
         constructor(method: String, args: Common?) : this() {
@@ -296,12 +280,10 @@ class CodeBlock {
 
         constructor(lists: Lists, index: Int) : this() {
             val codeNO = Syntax.Reserved.codeNO(Syntax.Reserved.Key.VAR)
-
             var block: Common? = lists.block(index)
-            if (block == null || block.type() != Type.WORD || (block as Word).codeNO() != codeNO) {
-                errorText = "${err(Syntax.Errors.Key.SAFETY)} CodeBlock.VarDef"
-                return
-            }
+            if (block == null || block.type() != Type.WORD || (block as Word).codeNO() != codeNO)
+                throw Errors.Logic("CodeBlock.VarDef")
+
             lists.removeAt(index)
             lineNO = block.lineNO()
 
@@ -336,9 +318,7 @@ class CodeBlock {
                     }
                 }
             }
-            if (nameList.size == 0 || className == null) {
-                errorText = "${err(Syntax.Errors.Key.SYNTAX)} line:$lineNO"
-            }
+            if (nameList.size == 0 || className == null) throw Errors.Syntax(Errors.Key.SYNTAX, lineNO = lineNO)
         }
 
         fun setToReference(ref: References.Lists) {
@@ -392,10 +372,9 @@ class CodeBlock {
             val operator = Syntax.Operator.word(Syntax.Operator.Type.SET)
 
             var block = lists.block(index)
-            if (block == null || block.type() != Type.WORD || (block as Word).codeNO() != codeNO) {
-                errorText = "${err(Syntax.Errors.Key.SAFETY)} CodeBlock.ConstDef"
-                return
-            }
+            if (block == null || block.type() != Type.WORD || (block as Word).codeNO() != codeNO)
+                throw Errors.Logic("CodeBlock.ConstDef")
+
             lists.removeAt(index)
             lineNO = block.lineNO()
 
@@ -406,9 +385,7 @@ class CodeBlock {
                 value = method.child(ARGUMENT)
                 lists.removeAt(index)
             }
-            if (name == null || value == null) {
-                errorText = "${err(Syntax.Errors.Key.SYNTAX)} line:$lineNO"
-            }
+            if (name == null || value == null) throw Errors.Syntax(Errors.Key.SYNTAX, lineNO = lineNO)
         }
 
         fun setToReference(ref: References.Lists) {
@@ -438,10 +415,9 @@ class CodeBlock {
             var index = start
 
             var block = lists.block(index)
-            if (block == null || block.type() != Type.WORD || (block as Word).codeNO() != codeNO) {
-                errorText = "${err(Syntax.Errors.Key.SAFETY)} CodeBlock.FunDef"
-                return
-            }
+            if (block == null || block.type() != Type.WORD || (block as Word).codeNO() != codeNO)
+                throw Errors.Logic("CodeBlock.FunDef")
+
             lists.removeAt(index)
             lineNO = block.lineNO()
 
@@ -476,9 +452,7 @@ class CodeBlock {
                     index++
                 }
             }
-            if (arguments == null || statement == null) {
-                errorText = "${err(Syntax.Errors.Key.SYNTAX)} line:$lineNO"
-            }
+            if (arguments == null || statement == null) throw Errors.Syntax(Errors.Key.SYNTAX, lineNO = lineNO)
         }
 
         open fun setToReference(ref: References.Lists) {
@@ -508,15 +482,19 @@ class CodeBlock {
         fun className() = className
 
         constructor(lists: Lists) : this() {
+            val errors = "${Errors.message(Errors.Key.SYNTAX)} arguments"
             if (lists.size() == 3) {
 
-                val block = lists.block(0) ?: return
+                val block = lists.block(0) ?: throw Errors.Syntax(errors)
                 if (block.type() == Type.WORD) name = block
 
-                val div = lists.block(1) ?: return
+                val div = lists.block(1) ?: throw Errors.Syntax(errors)
                 if (div.type() == Type.SIGN && div.strings() == Syntax.Chars.WORD_DIV_SIGN) {
                     className = lists.block(2)
                 }
+            }
+            else {
+                throw Errors.Syntax(errors)
             }
         }
     }
@@ -528,15 +506,17 @@ class CodeBlock {
         fun item(num: Int) = list[num]
 
         constructor(lists: Lists) : this() {
+            val errors = "${Errors.message(Errors.Key.SYNTAX)} arguments"
             if (lists.isCommaDivide()) {
                 lists.forEach { block ->
                     if (block.type() == Type.BRACKET) {
                         (block as Bracket).lists()?.let { list.add(ArgumentSet(it)) }
                     }
+                    else throw Errors.Syntax(errors, block.lineNO())
                 }
             }
-            else {
-                if (lists.size() == 3) list.add(ArgumentSet(lists))
+            else if (lists.size() > 0) {
+                list.add(ArgumentSet(lists))
             }
         }
 
@@ -569,10 +549,9 @@ class CodeBlock {
             var index = start
 
             var block = lists.block(index)
-            if (block == null || block.type() != Type.WORD || (block as Word).codeNO() != codeNO) {
-                errorText = "${err(Syntax.Errors.Key.SAFETY)} CodeBlock.InitDef"
-                return
-            }
+            if (block == null || block.type() != Type.WORD || (block as Word).codeNO() != codeNO)
+                throw Errors.Logic("CodeBlock.InitDef")
+
             lists.removeAt(index)
 
             lineNO = block.lineNO()
@@ -594,9 +573,7 @@ class CodeBlock {
                     index++
                 }
             }
-            if (arguments == null || statement == null) {
-                errorText = "${err(Syntax.Errors.Key.SYNTAX)} line:$lineNO"
-            }
+            if (arguments == null || statement == null) throw Errors.Syntax(Errors.Key.SYNTAX, lineNO = lineNO)
         }
 
         override fun setToReference(ref: References.Lists) {
@@ -626,10 +603,9 @@ class CodeBlock {
             var flagElse = false
 
             var block = lists.block(index)
-            if ((block == null) || (block.type() != Type.WORD) || ((block as Word).codeNO() != codeNO)) {
-                errorText = "${err(Syntax.Errors.Key.SAFETY)} class BlockIf line:$lineNO"
-                return
-            }
+            if ((block == null) || (block.type() != Type.WORD) || ((block as Word).codeNO() != codeNO))
+                throw Errors.Logic("CodeBlock.BlockIf line:$lineNO")
+
             lists.removeAt(index)
 
             lineNO = block.lineNO()
@@ -663,9 +639,7 @@ class CodeBlock {
                     break
                 }
             }
-            if (conditions == null || statementTrue == null) {
-                errorText = "${err(Syntax.Errors.Key.SYNTAX)} if line:$lineNO"
-            }
+            if (conditions == null || statementTrue == null) throw Errors.Syntax(Errors.Key.SYNTAX, lineNO = lineNO)
         }
 
         override fun dump(shift: String): String {
@@ -699,24 +673,21 @@ class CodeBlock {
         fun countUp() = countUp
 
         constructor(lists: Lists, index: Int, type: Type) : this(type) {
-            val loopType = getLoopType(type) ?: return
+            val loopType = getLoopType(type)
             val codeNO = Syntax.Reserved.codeNO(loopType)
 
             var block = lists.block(index)
-            if ((block == null) || (block.type() != Type.WORD) || ((block as Word).codeNO() != codeNO)) {
-                errorText = "${err(Syntax.Errors.Key.SAFETY)} CodeBlock.Condition"
-                return
-            }
+            if ((block == null) || (block.type() != Type.WORD) || ((block as Word).codeNO() != codeNO))
+                throw Errors.Logic("CodeBlock.Condition")
+
             lists.removeAt(index)
 
             lineNO = block.lineNO()
 
             while (index < lists.size()) {
                 block = lists.block(index)
-                if (block == null) {
-                    errorText = "${err(Syntax.Errors.Key.SAFETY)} class Condition line:$lineNO"
-                    return
-                }
+                if (block == null) throw Errors.Logic("class Condition line:$lineNO")
+
                 if (conditions == null) {
                     if (type == Type.FOR) setConditionFor(block)
                     else conditions = block
@@ -732,55 +703,41 @@ class CodeBlock {
                     break
                 }
             }
-            if (conditions == null || statement == null) {
-                errorText = "${err(Syntax.Errors.Key.SYNTAX)} line:$lineNO"
-            }
+            if (conditions == null || statement == null) throw Errors.Syntax(Errors.Key.SYNTAX, lineNO = lineNO)
         }
 
-        private fun getLoopType(type: Type): Syntax.Reserved.Key? {
+        private fun getLoopType(type: Type): Syntax.Reserved.Key {
             return when (type) {
                 Type.FOR   -> Syntax.Reserved.Key.FOR
                 Type.WHILE -> Syntax.Reserved.Key.WHILE
-                else       -> {
-                    errorText = "${err(Syntax.Errors.Key.SAFETY)} class Condition line:$lineNO"
-                    null
-                }
+                else       -> throw Errors.Logic("class Condition line:$lineNO")
             }
         }
 
         private fun setConditionFor(block: Common) {
-            val lists: Lists? =
-                if (block.type() == Type.BRACKET) (block as Bracket).lists() else null
-            if (lists == null) {
-                errorText = "${err(Syntax.Errors.Key.ILLEGAL_CONDITION)} for line:$lineNO"
-                return
-            }
+            val lists: Lists =
+                (if (block.type() == Type.BRACKET) (block as Bracket).lists() else null)
+                    ?: throw Errors.Syntax(Errors.Key.ILLEGAL_CONDITION, lineNO = lineNO)
+
             val branch = Syntax.Chars.FOR_BRANCH
             var cnt = 0
 
             while (cnt < lists.size() && cnt < 5) {
-                val child = lists.block(cnt)
-                if (child == null) {
-                    errorText = "${err(Syntax.Errors.Key.SAFETY)} class Condition line:$lineNO"
-                    break
-                }
+                val child = lists.block(cnt) ?: throw Errors.Logic("class Condition line:$lineNO")
+
                 when (cnt) {
                     0 -> initial = child
                     2 -> conditions = child
                     4 -> countUp = child
-                    1, 3 -> {
-                        if (!(child.type() == Type.SIGN && child.strings() == branch)) {
-                            errorText = "${err(Syntax.Errors.Key.ILLEGAL_CONDITION)} for line:$lineNO"
-                            break
-                        }
-                    }
+                    1, 3 -> if (!(child.type() == Type.SIGN && child.strings() == branch))
+                        throw Errors.Syntax(Errors.Key.ILLEGAL_CONDITION, lineNO = lineNO)
                 }
                 cnt ++
             }
         }
 
         override fun dump(shift: String): String {
-            val loopType = getLoopType(type()) ?: return ""
+            val loopType = getLoopType(type())
             val name = Syntax.Reserved.word(loopType)
             var text = "$shift[ $name ]\n"
 
@@ -810,10 +767,9 @@ class CodeBlock {
             var flagSuper = false
 
             var block = lists.block(index)
-            if (block == null || block.type() != Type.WORD || (block as Word).codeNO() != codeNO) {
-                errorText = "${err(Syntax.Errors.Key.SAFETY)} CodeBlock.ClassDef"
-                return
-            }
+            if (block == null || block.type() != Type.WORD || (block as Word).codeNO() != codeNO)
+                throw Errors.Logic("CodeBlock.ClassDef")
+
             lists.removeAt(index)
 
             lineNO = block.lineNO()
@@ -845,9 +801,7 @@ class CodeBlock {
                     break
                 }
             }
-            if (className == null || statement == null) {
-                errorText = "${err(Syntax.Errors.Key.SYNTAX)} line:$lineNO"
-            }
+            if (className == null || statement == null) throw Errors.Syntax(Errors.Key.SYNTAX, lineNO = lineNO)
         }
 
         fun setToReference(ref: References.Lists) {
@@ -902,10 +856,8 @@ class CodeBlock {
             val codeNO = Syntax.Reserved.codeNO(Syntax.Reserved.Key.RETURN)
 
             var block = lists.block(index)
-            if (block == null || block.type() != Type.WORD || (block as Word).codeNO() != codeNO) {
-                errorText = "${err(Syntax.Errors.Key.SAFETY)} CodeBlock.Returns"
-                return
-            }
+            if (block == null || block.type() != Type.WORD || (block as Word).codeNO() != codeNO)
+                throw Errors.Logic("CodeBlock.Returns")
 
             lists.removeAt(index)
             lineNO = block.lineNO()

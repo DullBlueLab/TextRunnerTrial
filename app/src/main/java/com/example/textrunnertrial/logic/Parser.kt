@@ -1,9 +1,8 @@
 package com.example.textrunnertrial.logic
 
+import com.example.textrunnertrial.Errors
 import com.example.textrunnertrial.RunnerViewModel
 import com.example.textrunnertrial.ui.Console
-
-private val ED = Syntax.Errors
 
 class Parser(
     private val vm: RunnerViewModel
@@ -24,8 +23,11 @@ class Parser(
 
             codes.buildReference()
         }
+        catch (e: Errors.Syntax) {
+            vm.error(e.message)
+        }
         catch (e: Exception) {
-            vm.error(Syntax.Errors.Key.SAFETY, " : ${e.message}")
+            vm.error(e.message ?: Errors.message(Errors.Key.SAFETY))
         }
         return codes
     }
@@ -53,7 +55,7 @@ class Parser(
                 blocks.append(CodeBlock.Sign(box))
             }
             else if (Syntax.Chars.isMatch(startChar, Syntax.Chars.Type.BRACKET_START)) {
-                val block = extractBracketSet(box, codes) ?: break
+                val block = extractBracketSet(box, codes)
                 blocks.append(block)
             }
             else if (Syntax.Chars.isMatch(startChar, Syntax.Chars.Type.BRACKET_END)) {
@@ -69,22 +71,18 @@ class Parser(
         return blocks
     }
 
-    private fun extractBracketSet(box: TextBox, codes: CodeUnit): CodeBlock.Common? {
+    private fun extractBracketSet(box: TextBox, codes: CodeUnit): CodeBlock.Common {
         val startBracket = box.getInc()
         val lineNO = box.lineNO
 
         val block: CodeBlock.Lists = makeCodeBlockList(box, codes)
         val endBracket = box.getInc()
 
-        if (startBracket == null || endBracket == null) {
-            vm.error(Syntax.Errors.Key.BRACKET, " line:$lineNO")
-            return null
-        }
+        if (startBracket == null || endBracket == null) throw Errors.Syntax(Errors.Key.BRACKET, lineNO = lineNO)
 
-        if (!Syntax.Chars.matchBracket(startBracket, endBracket)) {
-            vm.error(Syntax.Errors.Key.NOT_MATCH_BRACKET, " $startBracket to $endBracket line:$lineNO")
-            return null
-        }
+        if (!Syntax.Chars.matchBracket(startBracket, endBracket))
+            throw Errors.Syntax("${Errors.message(Errors.Key.NOT_MATCH_BRACKET)} $startBracket to $endBracket", lineNO)
+
         val bracketChars = startBracket.toString() + endBracket.toString()
         return CodeBlock.Bracket(bracketChars, block, lineNO)
     }
@@ -128,10 +126,6 @@ class Parser(
                     ) {
                         index --
                         val newBlock = CodeBlock.FunCall(lists, index)
-                        if (newBlock.errorText() != "") {
-                            vm.error(newBlock.errorText())
-                            return
-                        }
                         lists.removeAt(index)
                         lists.removeAt(index)
                         lists.insert(index, newBlock)
@@ -141,10 +135,7 @@ class Parser(
                         && (prev as CodeBlock.Word).reservedKey() == Syntax.Reserved.Key.LIST_OF
                         ) {
                         val newBlock = CodeBlock.ListValue(bracket)
-                        if (newBlock.errorText() != "") {
-                            vm.error(newBlock.errorText())
-                            return
-                        }
+
                         index --
                         lists.removeAt(index)
                         lists.removeAt(index)
@@ -153,10 +144,6 @@ class Parser(
                     else if (bracket.chars() == Syntax.Chars.LIST_INDEX_BRACKET) {
                         val dotBlock = CodeBlock.Sign(Syntax.Chars.DOT, bracket.lineNO())
                         val funBlock = CodeBlock.FunCall(Syntax.Method.Word.ITEM, bracket)
-                        if (funBlock.errorText() != "") {
-                            vm.error(funBlock.errorText())
-                            return
-                        }
                         lists.removeAt(index)
                         lists.insert(index, dotBlock)
                         index ++
@@ -176,10 +163,6 @@ class Parser(
             val block = lists.block(index) ?: break
             if (block.type() == CodeBlock.Type.SIGN && block.strings() == sign) {
                 val newBlock = CodeBlock.ObjectRef(lists, index, def)
-                if (newBlock.errorText() != "") {
-                    vm.error(newBlock.errorText())
-                    return
-                }
                 if (newBlock.child(CodeBlock.SUBJECT) != null) {
                     if (def.prev) {
                         index--
@@ -214,10 +197,6 @@ class Parser(
                 }
                 if (def != null) {
                     newBlock = CodeBlock.ObjectRef(lists, index, def)
-                    if (newBlock.errorText() != "") {
-                        vm.error(newBlock.errorText())
-                        return
-                    }
                     if (newBlock.child(CodeBlock.SUBJECT) != null) {
                         if (def.prev) {
                             index--
@@ -246,10 +225,6 @@ class Parser(
                     && block.strings() == Syntax.Reserved.Word.RETURN) {
 
                     val newBlock = CodeBlock.Returns(list, index)
-                    if (newBlock.errorText() != "") {
-                        vm.error(newBlock.errorText())
-                        break
-                    }
                     list.insert(index, newBlock)
                 }
                 index ++
@@ -283,9 +258,6 @@ class Parser(
                         if (type == CodeBlock.Type.IF) CodeBlock.BlockIf(list, index)
                         else CodeBlock.Condition(list, index, type)
 
-                    if (condition.errorText() != "") {
-                        error(condition.errorText())
-                    }
                     list.insert(index, condition)
                 }
                 index ++
@@ -342,12 +314,14 @@ class Parser(
             if (block.type() == CodeBlock.Type.WORD
                 && (block as CodeBlock.Word).codeNO() == codeNO) {
 
-                val varDef = makeDef(lists, index)
-                if (varDef.errorText() != "") {
-                    vm.error(varDef.errorText())
-                    break
+                try {
+                    val varDef = makeDef(lists, index)
+                    lists.insert(index, varDef)
                 }
-                lists.insert(index, varDef)
+                catch (e: Errors.Syntax) {
+                    val number = if (e.lineNO == 0) block.lineNO() else e.lineNO
+                    throw Errors.Syntax(e.threwMessage(), number)
+                }
             }
             index ++
         }

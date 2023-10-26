@@ -1,6 +1,5 @@
 package com.example.textrunnertrial
 
-import androidx.compose.runtime.CompositionLocalContext
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.core.text.isDigitsOnly
@@ -8,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import com.example.textrunnertrial.action.Drawing
 import com.example.textrunnertrial.action.Runner
 import com.example.textrunnertrial.logic.Parser
-import com.example.textrunnertrial.logic.Syntax
 import com.example.textrunnertrial.ui.Console
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -97,7 +95,7 @@ class RunnerViewModel() : ViewModel() {
             if (status.errorCount == 0) runner.run(codes)
         }
         catch (e: Exception) {
-            error("${Syntax.Errors.message(Syntax.Errors.Key.SAFETY)} ${e.message}")
+            error("${Errors.message(Errors.Key.SAFETY)} ${e.message}")
         }
 
         _uiState.update { state ->
@@ -144,8 +142,8 @@ class RunnerViewModel() : ViewModel() {
         status.runnerActive = false
     }
 
-    fun error(key: Syntax.Errors.Key, text: String) {
-        val message = Syntax.Errors.message(key) + text
+    fun error(key: Errors.Key, text: String) {
+        val message = Errors.message(key) + text
         error(message)
     }
 
@@ -180,8 +178,8 @@ class RunnerViewModel() : ViewModel() {
     fun setupSettingValue() {
         _uiState.update { state ->
             state.copy(
-                timerLimit = setting.timerLimit ?: 0L,
-                loopLimit = setting.loopLimit ?: 0
+                timerLimit = setting.timerLimit,
+                loopLimit = setting.loopLimit
             )
         }
     }

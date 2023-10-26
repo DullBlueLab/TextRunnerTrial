@@ -8,7 +8,7 @@ import com.example.textrunnertrial.logic.CodeBlock
 import com.example.textrunnertrial.logic.CodeUnit
 import com.example.textrunnertrial.logic.References
 import com.example.textrunnertrial.logic.Syntax
-import com.example.textrunnertrial.ui.Console
+import com.example.textrunnertrial.Errors
 import java.time.OffsetDateTime
 import java.util.Timer
 import java.time.temporal.ChronoUnit
@@ -38,6 +38,7 @@ class Runner(
 
     fun run(codes: CodeUnit) {
         try {
+            mainObject = null
             this.codes = codes
             spaces.setup(codes.reference())
 
@@ -54,8 +55,11 @@ class Runner(
                 setTimerTask(status.timerCount)
             }
         }
+        catch (e: Errors.Syntax) {
+            vm.error(e.message)
+        }
         catch (e: Exception) {
-            vm.error(Syntax.Errors.Key.SAFETY, " ${e.message} Runner.run")
+            vm.error(Errors.Key.SAFETY, " ${e.message} Runner.run")
         }
         if (status.errorCount > 0) stop()
     }
@@ -66,12 +70,21 @@ class Runner(
     }
 
     fun restart() {
-        mainObject?.let {
-            status.runnerActive = true
-            if (status.timerCount > 0) {
-                setTimerTask(status.timerCount)
+        try {
+            mainObject?.let {
+                status.runnerActive = true
+                if (status.timerCount > 0) {
+                    setTimerTask(status.timerCount)
+                }
             }
         }
+        catch (e: Errors.Syntax) {
+            vm.error(e.message)
+        }
+        catch (e: Exception) {
+            vm.error(Errors.Key.SAFETY, " ${e.message} Runner.run")
+        }
+        if (status.errorCount > 0) stop()
     }
 
     fun onTap(offset: Offset) {
@@ -88,16 +101,15 @@ class Runner(
                 args.add(Objects.Doubles(offset.x.toDouble()))
                 args.add(Objects.Doubles(offset.y.toDouble()))
 
-                val result = executeMethodCall(main, WORD_TAP_METHOD, args)
-
-                if (result.type() == Objects.Type.ERRORS) {
-                    vm.error("${(result as Objects.Errors).message()} on tap action")
-                }
+                executeMethodCall(main, WORD_TAP_METHOD, args)
                 status.runningCount--
             }
         }
+        catch (e: Errors.Syntax) {
+            vm.error(e.message)
+        }
         catch(e: Exception) {
-            vm.error(Syntax.Errors.Key.SAFETY, " ${e.message} Runner.onTap")
+            vm.error(Errors.Key.SAFETY, " ${e.message} Runner.onTap")
         }
         if (status.errorCount > 0) stop()
         return
@@ -114,26 +126,27 @@ class Runner(
                 status.runningCount++
 
                 val args: MutableList<Objects.Common> = mutableListOf()
-                val result = executeMethodCall(main, WORD_CANVAS_CHANGED, args)
-
-                if (result.type() == Objects.Type.ERRORS) {
-                    vm.error("${(result as Objects.Errors).message()} canvas changed action")
-                }
+                executeMethodCall(main, WORD_CANVAS_CHANGED, args)
                 status.runningCount--
             }
         }
+        catch (e: Errors.Syntax) {
+            vm.error(e.message)
+        }
          catch (e: Exception) {
-             vm.error(Syntax.Errors.Key.SAFETY, " ${e.message} Runner.canvasChanged")
+             vm.error(Errors.Key.SAFETY, " ${e.message} Runner.canvasChanged")
         }
         if (status.errorCount > 0) stop()
     }
 
     private fun executeMain() {
-        var result: Objects.Common
         val args: MutableList<Objects.Common> = mutableListOf()
 
-        mainObject = spaces.createVarObject(
-            WORD_MAIN_VAR, Spaces.Names(WORD_MAIN_CLASS), isMember = false)
+        if (spaces.findClassDef(WORD_MAIN_CLASS) != null) {
+            mainObject = spaces.createVarObject(
+                WORD_MAIN_VAR, Spaces.Names(WORD_MAIN_CLASS), isMember = false
+            )
+        }
 
         if (mainObject?.type() == Objects.Type.INSTANCE) {
             val main = mainObject as Objects.Instances
@@ -142,19 +155,12 @@ class Runner(
             // find and call init method
             val initFun = main.searchFunDef(RW.INIT)
             if (initFun != null) {
-                result = executeMethodCall(main, RW.INIT, args)
-                if (result.type() == Objects.Type.ERRORS) {
-                    vm.error((result as Objects.Errors).message())
-                    return
-                }
+                executeMethodCall(main, RW.INIT, args)
             }
             // find and call run method
             val runFun = main.searchFunDef(WORD_RUN_METHOD)
             if (runFun != null) {
-                result = executeMethodCall(main, WORD_RUN_METHOD, args)
-                if (result.type() == Objects.Type.ERRORS) {
-                    vm.error((result as Objects.Errors).message())
-                }
+                executeMethodCall(main, WORD_RUN_METHOD, args)
             }
         }
         // nothing class Main
@@ -174,17 +180,17 @@ class Runner(
 
                 val args: MutableList<Objects.Common> = mutableListOf()
                 args.add(Objects.Ints(interval))
-                val result = executeMethodCall(mainObject!!, WORD_TIMER_METHOD, args)
+                executeMethodCall(mainObject!!, WORD_TIMER_METHOD, args)
 
-                if (result.type() == Objects.Type.ERRORS) {
-                    vm.error("${(result as Objects.Errors).message()} timer running")
-                }
                 status.prevTimerTime = now
                 status.runningCount--
             }
         }
+        catch (e: Errors.Syntax) {
+            vm.error(e.message)
+        }
         catch (e: Exception) {
-            vm.error(Syntax.Errors.Key.SAFETY, " ${e.message} Runner.executeTimerMethod")
+            vm.error(Errors.Key.SAFETY, " ${e.message} Runner.executeTimerMethod")
         }
         vm.updateConsole()
         if (status.errorCount > 0) stop()
@@ -202,58 +208,62 @@ class Runner(
     }
 
     private fun executeBlock(block: CodeBlock.Common) : Objects.Common {
-        val result: Objects.Common? = when (block.type()) {
-            CodeBlock.Type.WORD -> {
-                if ((block as CodeBlock.Word).isReservedKey())
-                    getReservedValue(block)
-                else
-                    spaces.getValue((block).name())
-            }
-            CodeBlock.Type.STRING -> {
-                Objects.Strings(block as CodeBlock.Strings)
-            }
-            CodeBlock.Type.NUMBER -> {
-                if (block.strings().contains(Syntax.Chars.DOT))
-                    Objects.Doubles(block as CodeBlock.Number)
-                else
-                    Objects.Ints(block as CodeBlock.Number)
-            }
-            CodeBlock.Type.LIST -> {
-                makeListValue(block as CodeBlock.ListValue)
-            }
-            CodeBlock.Type.VAR_DEF -> {
-                makeVarObject(block as CodeBlock.VarDef, isMembers = false)
-            }
-            CodeBlock.Type.CONST_DEF -> {
-                makeConstObject(block as CodeBlock.ConstDef, isMembers = false)
-            }
-            CodeBlock.Type.BRACKET -> {
-                executeBracket(block)
-            }
-            CodeBlock.Type.OBJECT_REF -> {
-                executeObjectRef(block)
-            }
-            CodeBlock.Type.FUN_CALL -> {
-                executeFunCall(block as CodeBlock.FunCall)
-            }
-            CodeBlock.Type.IF -> {
-                executeIf(block as CodeBlock.BlockIf)
-            }
-            CodeBlock.Type.WHILE -> {
-                executeWhile(block as CodeBlock.Condition)
-            }
-            CodeBlock.Type.FOR -> {
-                executeFor(block as CodeBlock.Condition)
-            }
-            CodeBlock.Type.RETURN -> {
-                executeReturn(block as CodeBlock.Returns)
-            }
-            else -> {
-                Objects.Voids()
+        var result: Objects.Common? = null
+        try {
+            result = when (block.type()) {
+                CodeBlock.Type.WORD -> {
+                    if ((block as CodeBlock.Word).isReservedKey())
+                        getReservedValue(block)
+                    else
+                        spaces.getValue((block).name())
+                }
+                CodeBlock.Type.STRING -> {
+                    Objects.Strings(block as CodeBlock.Strings)
+                }
+                CodeBlock.Type.NUMBER -> {
+                    if (block.strings().contains(Syntax.Chars.DOT))
+                        Objects.Doubles(block as CodeBlock.Number)
+                    else
+                        Objects.Ints(block as CodeBlock.Number)
+                }
+                CodeBlock.Type.LIST -> {
+                    makeListValue(block as CodeBlock.ListValue)
+                }
+                CodeBlock.Type.VAR_DEF -> {
+                    makeVarObject(block as CodeBlock.VarDef, isMembers = false)
+                }
+                CodeBlock.Type.CONST_DEF -> {
+                    makeConstObject(block as CodeBlock.ConstDef, isMembers = false)
+                }
+                CodeBlock.Type.BRACKET -> {
+                    executeBracket(block)
+                }
+                CodeBlock.Type.OBJECT_REF -> {
+                    executeObjectRef(block)
+                }
+                CodeBlock.Type.FUN_CALL -> {
+                    executeFunCall(block as CodeBlock.FunCall)
+                }
+                CodeBlock.Type.IF -> {
+                    executeIf(block as CodeBlock.BlockIf)
+                }
+                CodeBlock.Type.WHILE -> {
+                    executeWhile(block as CodeBlock.Condition)
+                }
+                CodeBlock.Type.FOR -> {
+                    executeFor(block as CodeBlock.Condition)
+                }
+                CodeBlock.Type.RETURN -> {
+                    executeReturn(block as CodeBlock.Returns)
+                }
+                else -> {
+                    Objects.Voids()
+                }
             }
         }
-        if (result?.type() == Objects.Type.ERRORS) {
-            vm.error("${(result as Objects.Errors).message()} line:${block.lineNO()}")
+        catch (e: Errors.Syntax) {
+            val number = if (e.lineNO == 0) block.lineNO() else e.lineNO
+            throw Errors.Syntax(e.threwMessage(), number)
         }
         return result ?: Objects.Voids()
     }
@@ -278,8 +288,7 @@ class Runner(
 
         val method = Syntax.Reserved.word(Syntax.Reserved.Key.INIT)
         val className = block.className()
-        if (method == null || className == null)
-            return errorObj(Syntax.Errors.Key.SAFETY, " Runner.makeVarObject")
+        if (method == null || className == null) throw Errors.Logic("Runner.makeVarObject")
 
         var arguments: MutableList<Objects.Common>? = null
         block.classArgument()?.let { arguments = makeArgumentList(it) }
@@ -358,8 +367,7 @@ class Runner(
         val subject = block.child(CodeBlock.SUBJECT)
         val argument = block.child(CodeBlock.ARGUMENT)
 
-        if (subject == null || argument == null)
-            return errorObj(Syntax.Errors.Key.SAFETY, " executeObjectRef")
+        if (subject == null || argument == null) throw Errors.Logic("executeObjectRef")
 
         if (subject.type() == CodeBlock.Type.WORD && subject.name() == Machine.NAME) {
             result = executeMachineMethod(argument)
@@ -375,6 +383,9 @@ class Runner(
                     }
                 }
                 CodeBlock.Type.FUN_CALL -> {
+                    if (objects.type() == Objects.Type.ERRORS || objects.type() == Objects.Type.VOIDS)
+                        throw Errors.Syntax(Errors.Key.UNKNOWN, subject.text())
+
                     val objectArg = makeArgumentList(argument.child(CodeBlock.ARGUMENT))
                     val method = (argument as CodeBlock.FunCall).name()
                     if (status.errorCount == 0)
@@ -383,7 +394,7 @@ class Runner(
                 else -> {}
             }
         }
-        return result ?: errorObj(Syntax.Errors.Key.SYNTAX, "")
+        return result ?: throw Errors.Syntax(Errors.Key.SYNTAX)
     }
 
     private fun executeMachineMethod(block: CodeBlock.Common) : Objects.Common {
@@ -396,7 +407,7 @@ class Runner(
             if (status.errorCount == 0)
                 result = machine.execute(methods, arguments)
         }
-        return result ?: errorObj(Syntax.Errors.Key.SAFETY, " Runner.executeMachineMethod")
+        return result ?: throw Errors.Logic("Runner.executeMachineMethod")
     }
 
     private fun executeMethodCall(
@@ -420,7 +431,7 @@ class Runner(
         else {
             result = objects.execute(method, arguments)
         }
-        return result ?: errorObj(Syntax.Errors.Key.SAFETY, " Runner.executeMethodCall")
+        return result ?: throw Errors.Logic("Runner.executeMethodCall")
     }
 
     private fun executeFunCall(block: CodeBlock.FunCall) : Objects.Common? {
@@ -436,10 +447,9 @@ class Runner(
 
         if (instance != null) {
             funDef = instance.searchFunDef(method)
+                ?: throw Errors.Syntax(Errors.Key.UNKNOWN, ": ${instance.name()} $method")
 
-            result =
-                if (funDef != null) funCall(funDef, objectArg)
-                else errorObj(Syntax.Errors.Key.UNKNOWN, " : ${instance.name()} $method")
+            result = funCall(funDef, objectArg)
         }
         if (funDef == null) {
             val match = codes?.reference()?.search(References.Type.FUN, method)?.codes()
@@ -449,7 +459,7 @@ class Runner(
                 result = funCall(match as CodeBlock.FunDef, objectArg)
                 spaces.groundFlag = false
             }
-            else result = errorObj(Syntax.Errors.Key.UNKNOWN, " : $method")
+            else throw Errors.Syntax(Errors.Key.UNKNOWN, ": $method")
         }
         return result
     }
@@ -457,12 +467,9 @@ class Runner(
     private fun funCall(
         def: CodeBlock.FunDef, objectArg: MutableList<Objects.Common>): Objects.Common {
 
-        val lists = def.statement()?.lists()
-            ?: return errorObj(Syntax.Errors.Key.SAFETY, " Runner.funCall")
+        val lists = def.statement()?.lists() ?: throw Errors.Logic("Runner.funCall")
 
-        val ret = spaces.updateFunVar(def, objectArg)
-        if (ret != "") return Objects.Errors(ret)
-
+        spaces.updateFunVar(def, objectArg)
         var result = executeLists(lists)
 
         spaces.returns.objects()?.let {
@@ -485,7 +492,7 @@ class Runner(
             else
                 block.statementElse()?.let { result = executeBlock(it) }
         }
-        else result = errorObj(Syntax.Errors.Key.ILLEGAL_CONDITION, " if")
+        else throw Errors.Syntax(Errors.Key.ILLEGAL_CONDITION, " if")
 
         return result ?: voids
     }
@@ -496,8 +503,7 @@ class Runner(
 
         val condition = block.conditions()
         val statement = block.statement()
-        if (condition == null || statement == null)
-            return errorObj(Syntax.Errors.Key.SAFETY, " Runner.executeWhile")
+        if (condition == null || statement == null) throw Errors.Logic("Runner.executeWhile")
 
         var loops = executeBlock(condition)
 
@@ -505,8 +511,7 @@ class Runner(
             && ((loops as Objects.Booleans).valueBoolean()) ) {
 
             loopCount ++
-            if (loopCount > vm.setting().loopLimit)
-                return errorObj(Syntax.Errors.Key.LIMIT_OVER, " while")
+            if (loopCount > vm.setting().loopLimit) throw Errors.Syntax(Errors.Key.LIMIT_OVER, " while")
 
             result = executeBlock(statement)
             if (result.typeError()) return result
@@ -520,7 +525,7 @@ class Runner(
 
     private fun executeFor(block: CodeBlock.Condition): Objects.Common {
         var result: Objects.Common?
-        val statement = block.statement() ?: return errorObj(Syntax.Errors.Key.UNKNOWN, " for")
+        val statement = block.statement() ?: throw Errors.Syntax(Errors.Key.UNKNOWN, " for")
         var loopFlag = true
         var loopCount = 0
 
@@ -528,7 +533,7 @@ class Runner(
         val condition = block.conditions()
         val countUp = block.countUp()
         if (initial == null || condition == null || countUp == null)
-            return errorObj(Syntax.Errors.Key.ILLEGAL_CONDITION, " for")
+            throw Errors.Syntax(Errors.Key.ILLEGAL_CONDITION, " for")
 
         result = executeBlock(initial)
         if (result.typeError()) return result
@@ -536,12 +541,12 @@ class Runner(
         while (loopFlag) {
             loopCount ++
             if (loopCount > vm.setting().loopLimit)
-                return errorObj(Syntax.Errors.Key.LIMIT_OVER, " while")
+                throw Errors.Syntax(Errors.Key.LIMIT_OVER, " while")
 
             val flag = executeBlock(condition)
             if (flag.typeError()) return flag
             if (flag.type() != Objects.Type.BOOLEANS)
-                return errorObj(Syntax.Errors.Key.ILLEGAL_CONDITION, " for")
+                throw Errors.Syntax(Errors.Key.ILLEGAL_CONDITION, " for")
 
             if (!(flag as Objects.Booleans).valueBoolean()) {
                 loopFlag = false
@@ -579,24 +584,19 @@ class Runner(
                 arguments?.let { args ->
                     for (child in args) {
                         val objects = executeBlock(child)
-                        if (objects.type() == Objects.Type.VOIDS) {
-                            vm.error(Syntax.Errors.Key.ILLEGAL_ARGUMENT, " ${child.text()} line:${block.lineNO()}\n")
-                            break
-                        }
-                        else if (objects.type() == Objects.Type.ERRORS) {
-                            break
-                        }
-                        else lists.add(objects)
+                        if (objects.type() == Objects.Type.VOIDS)
+                            throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, " ${child.text()} line:${block.lineNO()}\n")
+
+                        lists.add(objects)
                     }
                 }
             }
             else {
                 val objects = executeBlock(block)
-                if (objects.type() == Objects.Type.VOIDS) {
-                    vm.error(Syntax.Errors.Key.ILLEGAL_ARGUMENT, " ${block.text()} line:{${block.lineNO()}\n")
-                }
-                else if (objects.type() != Objects.Type.ERRORS)
-                    lists.add(objects)
+                if (objects.type() == Objects.Type.VOIDS)
+                    throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, " ${block.text()} line:{${block.lineNO()}\n")
+
+                lists.add(objects)
             }
         }
         return lists
