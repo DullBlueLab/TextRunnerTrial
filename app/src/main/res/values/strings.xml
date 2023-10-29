@@ -36,4 +36,6 @@
     <string name="error_browse_guidance">Not browse guidance page</string>
     <string name="title_info">Info</string>
     <string name="label_guide">We provide guides on our homepage.</string>
+    <string name="limit_func">Limit over on function</string>
+    <string name="label_func_limit">On function call limit</string>
 </resources>
