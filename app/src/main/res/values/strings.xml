@@ -38,4 +38,13 @@
     <string name="label_guide">We provide guides on our homepage.</string>
     <string name="limit_func">Limit over on function</string>
     <string name="label_func_limit">On function call limit</string>
+    <string name="title_guide">Guide</string>
+    <string name="text_guide">Connect to the Internet to view the guide.</string>
+    <string name="button_browse">Browse</string>
+    <string name="button_cancel">Cancel</string>
+    <string name="icon_network">Connect network</string>
+    <string name="icon_guide">Guide</string>
+    <string name="button_dump">Dump</string>
+    <string name="text_dump">You can see a list of program code analysis</string>
+    <string name="title_tool">Tool</string>
 </resources>

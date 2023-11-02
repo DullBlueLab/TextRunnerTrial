@@ -164,6 +164,23 @@ private const val SOURCE_LIST =
             "\$m.print(box2[1][1]) "
 private const val RESULT_LIST = "eee\nFFF\n"
 
+private const val SOURCE_WHEN =
+    "fun test(name: String) { \n" +
+            "  var text: String \n" +
+            "  text = (when (name) { \n" +
+            "    \"Sum\", \"Mary\", \"Henry\" -> \"Thanks! \" + name \n" +
+            "    \"Robinson\" -> \"Thank you Mrs.\" + name + \" Sur\" \n" +
+            "    else -> \"Thank you\" \n" +
+            "  } ) \n" +
+            "  \$m.print(text) \n" +
+            "} \n" +
+            "test(\"John\") \n" +
+            "test(\"Robinson\") \n" +
+            "test(\"Mary\") \n"
+private const val RESULT_WHEN = "Thank you\nThank you Mrs.Robinson Sur\nThanks! Mary\n"
+
+
+
 class TextRunnerModuleTest {
 
     @Test
@@ -307,5 +324,16 @@ class TextRunnerModuleTest {
         viewModel.run()
         val result = viewModel.uiState.value.consoleText
         assertEquals(result, RESULT_LIST)
+    }
+
+    @Test
+    fun testWhen() {
+        val viewModel = RunnerViewModel()
+        viewModel.testSetup()
+
+        viewModel.uiState.value.sourceText = SOURCE_WHEN
+        viewModel.run()
+        val result = viewModel.uiState.value.consoleText
+        assertEquals(result, RESULT_WHEN)
     }
 }

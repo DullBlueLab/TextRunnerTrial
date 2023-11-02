@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -15,8 +14,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
@@ -24,6 +25,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.dullbluelab.textrunnertrial.ui.GuideDialog
 import com.dullbluelab.textrunnertrial.ui.ScreenDrawing
 import com.dullbluelab.textrunnertrial.ui.ScreenHome
 import com.dullbluelab.textrunnertrial.ui.ScreenExecute
@@ -39,7 +41,7 @@ fun RunnerAppBar(
     canNavigateBack: Boolean,
     currentScreen: String,
     navigateUp: () -> Unit,
-    onDumpButtonClicked: () -> Unit,
+    onGuideButtonClicked: () -> Unit,
     onSettingButtonClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -69,13 +71,12 @@ fun RunnerAppBar(
             if (currentScreen == "Home") {
                 IconButton(
                     onClick = {
-                        onDumpButtonClicked()
+                        onGuideButtonClicked()
                     }
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.List,
-                        contentDescription = stringResource(id = R.string.dump_button)
-                    )
+                        painter = painterResource(id = R.drawable.help_24px),
+                        contentDescription = stringResource(id = R.string.icon_guide))
                 }
                 IconButton(
                     onClick = {
@@ -97,10 +98,12 @@ fun RunnerAppBar(
 fun TextRunnerApp(
     viewModel: RunnerViewModel,
     launchLoadText: () -> Unit,
-    onLinkGuideClicked: () -> Unit
+    onLinkGuideClicked: () -> Unit,
+
 ) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
+    val uiState by viewModel.uiState.collectAsState()
 
     if (destinationListener == null) {
         val listener = makeDestinationListener(viewModel)
@@ -115,8 +118,8 @@ fun TextRunnerApp(
                 navigateUp = {
                     navController.navigateUp()
                 },
-                onDumpButtonClicked = {
-                    navController.navigate(RunnerScreen.Execute.name)
+                onGuideButtonClicked = {
+                    viewModel.updateGuideDialog(true)
                 },
                 onSettingButtonClicked = {
                     navController.navigate(RunnerScreen.Setting.name)
@@ -145,6 +148,17 @@ fun TextRunnerApp(
                         launchLoadText()
                     }
                 )
+                if (uiState.flagGuideDialog) {
+                    GuideDialog(
+                        onBrowse = {
+                            viewModel.updateGuideDialog(false)
+                            onLinkGuideClicked()
+                        },
+                        onCancel = {
+                            viewModel.updateGuideDialog(false)
+                        }
+                    )
+                }
             }
             composable(route = RunnerScreen.Drawing.name) {
                 ScreenDrawing(viewModel)
@@ -154,7 +168,12 @@ fun TextRunnerApp(
             }
             composable(route = RunnerScreen.Setting.name) {
                 viewModel.setupSettingValue()
-                ScreenSetting(viewModel, onLinkGuideClicked = onLinkGuideClicked)
+                ScreenSetting(
+                    viewModel,
+                    onDumpClicked = {
+                        navController.navigate(RunnerScreen.Execute.name)
+                    }
+                )
             }
         }
     }

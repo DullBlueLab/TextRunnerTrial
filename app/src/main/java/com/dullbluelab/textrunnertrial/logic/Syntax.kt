@@ -25,6 +25,7 @@ object Syntax {
         const val STATEMENT_BRACKET = "{}"
         const val LIST_DATA_BRACKET = "()"
         const val LIST_INDEX_BRACKET = "[]"
+        const val COMMA_BRACKET = "()"
 
         val LIST_DATA_BRACKET_START = LIST_DATA_BRACKET[0]
         val LIST_DATA_BRACKET_END = LIST_DATA_BRACKET[1]
@@ -34,6 +35,7 @@ object Syntax {
         const val DOT = "."
         val OBJECT_REF = Operator.setting(Operator.Type.DOT)?.sign ?: "."
         const val FOR_BRANCH = ":"
+        const val WHEN_BRANCH = "->"
 
         const val COMMENT_START = "/*"
         const val COMMENT_END = "*/"

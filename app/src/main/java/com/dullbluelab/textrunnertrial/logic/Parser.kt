@@ -86,7 +86,7 @@ class Parser(
     }
 
     private fun buildBlock(lists: CodeBlock.Lists) {
-        lists.findListAndRun { list -> list.buildCommaLists() }
+        lists.findBracketAndRun(Syntax.Chars.COMMA_BRACKET) { list -> list.buildCommaLists() }
         lists.findListAndRun { list -> makeFunCall(list) }
         lists.findListAndRun { list -> makeOperator(list, ".") }
 
@@ -252,9 +252,11 @@ class Parser(
                 val type = getConditionType(block)
 
                 if (type != null) {
-                    val condition =
-                        if (type == CodeBlock.Type.IF) CodeBlock.BlockIf(list, index)
-                        else CodeBlock.Condition(list, index, type)
+                    val condition = when (type) {
+                        CodeBlock.Type.IF -> CodeBlock.BlockIf(list, index)
+                        CodeBlock.Type.WHEN -> CodeBlock.BlockWhen(list, index)
+                        else -> CodeBlock.Condition(list, index, type)
+                    }
 
                     list.insert(index, condition)
                 }

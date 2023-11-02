@@ -30,7 +30,7 @@ import com.dullbluelab.textrunnertrial.RunnerViewModel
 fun ScreenSetting(
     viewModel: RunnerViewModel,
     modifier: Modifier = Modifier,
-    onLinkGuideClicked: () -> Unit
+    onDumpClicked: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -79,19 +79,19 @@ fun ScreenSetting(
         )
         Spacer(modifier = Modifier.size(64.dp))
         Text(
-            text = stringResource(id = R.string.title_info),
+            text = stringResource(id = R.string.title_tool),
             fontSize = 24.sp
         )
         Spacer(modifier = Modifier.size(32.dp))
         Text(
-            text = stringResource(id = R.string.label_guide)
+            text = stringResource(id = R.string.text_dump)
         )
         Button(
-            onClick = { onLinkGuideClicked() },
+            onClick = { onDumpClicked() },
             modifier = Modifier.align(Alignment.End).padding(8.dp),
         ) {
             Text(
-                text = stringResource(id = R.string.link_guide)
+                text = stringResource(id = R.string.button_dump)
             )
         }
     }

@@ -251,6 +251,9 @@ class Runner(
             CodeBlock.Type.FOR -> {
                 executeFor(block as CodeBlock.Condition)
             }
+            CodeBlock.Type.WHEN -> {
+                executeWhen(block as CodeBlock.BlockWhen)
+            }
             CodeBlock.Type.RETURN -> {
                 executeReturn(block as CodeBlock.Returns)
             }
@@ -562,6 +565,45 @@ class Runner(
         }
         status.flagLoopBreak = false
         return result ?: voids
+    }
+
+    private fun executeWhen(block: CodeBlock.BlockWhen): Objects.Common {
+        val method = Syntax.Method.Word.EQUAL
+        var arguments: MutableList<Objects.Common>
+        var match = false
+        var result: Objects.Common? = null
+        var objects: Objects.Common
+
+        val subject = if (block.subject != null) executeBlock(block.subject!!) else null
+
+        for (item in block.itemList) {
+
+            for (argument in item.arguments) {
+                if (subject == null) {
+                    result = executeBlock(argument)
+                }
+                else {
+                    objects = executeBlock(argument)
+                    arguments = mutableListOf(objects)
+                    result = executeMethodCall(subject, method, arguments)
+                }
+                if (result.type() == Objects.Type.BOOLEANS
+                    && (result as Objects.Booleans).valueBoolean()) {
+                    match = true
+                    break
+                }
+            }
+            if (match) {
+                result = executeBlock(item.statement)
+                break
+            }
+        }
+        if (!match && block.elseStatement != null) {
+            result = executeBlock(block.elseStatement!!)
+            match = true
+        }
+        return if (match && result != null) result
+        else throw Errors.Syntax(Errors.Key.NOT_MATCH_TYPE, "when", block.lineNO())
     }
 
     private fun executeReturn(block: CodeBlock.Returns): Objects.Common {

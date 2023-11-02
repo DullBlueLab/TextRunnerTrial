@@ -25,7 +25,9 @@ class RunnerViewModel : ViewModel() {
 
         var timerLimit: Long = 0L,
         var loopLimit: Int = 0,
-        var functionLimit: Int = 0
+        var functionLimit: Int = 0,
+
+        var flagGuideDialog: Boolean = false
     )
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
@@ -178,6 +180,14 @@ class RunnerViewModel : ViewModel() {
         }
     }
 
+    fun updateGuideDialog(flag: Boolean) {
+        _uiState.update { state ->
+            state.copy(
+                flagGuideDialog = flag
+            )
+        }
+    }
+
     fun setupSettingValue() {
         _uiState.update { state ->
             state.copy(
@@ -214,6 +224,7 @@ class RunnerViewModel : ViewModel() {
             )
         }
     }
+
     fun saveSettingValue() {
         setting.timerLimit = _uiState.value.timerLimit
         setting.loopLimit = _uiState.value.loopLimit

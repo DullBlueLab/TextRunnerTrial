@@ -35,6 +35,8 @@ class CodeBlock {
 
         open fun findListAndRun(process: (Lists) -> Unit) {}
 
+        open fun findBracketAndRun(bracket: String, process: (Lists) -> Unit) {}
+
         fun matchCharType(char: Char, type: Syntax.Chars.Type)
             = (char != ' ' && Syntax.Chars.isMatch(char, type))
 
@@ -126,6 +128,13 @@ class CodeBlock {
         override fun findListAndRun(process: (Lists) -> Unit) {
             lists?.findListAndRun(process)
         }
+
+        override fun findBracketAndRun(bracket: String, process: (Lists) -> Unit) {
+            lists?.let {
+                it.findBracketAndRun(bracket, process)
+                if (strings == bracket) process(it)
+            }
+        }
     }
 
     class Strings(strings: String, lineNO: Int) : Common(Type.STRING, strings, lineNO) {
@@ -167,6 +176,10 @@ class CodeBlock {
 
         override fun findListAndRun(process: (Lists) -> Unit) {
             values?.findListAndRun(process)
+        }
+
+        override fun findBracketAndRun(bracket: String, process: (Lists) -> Unit) {
+            values?.findBracketAndRun(bracket, process)
         }
 
         override fun text(): String = values?.text() ?: ""
@@ -218,6 +231,11 @@ class CodeBlock {
             argument?.findListAndRun(process)
         }
 
+        override fun findBracketAndRun(bracket: String, process: (Lists) -> Unit) {
+            subject?.findBracketAndRun(bracket, process)
+            argument?.findBracketAndRun(bracket, process)
+        }
+
         override fun text(): String {
             return "${subject?.text()}$strings${argument?.text()}"
         }
@@ -257,6 +275,10 @@ class CodeBlock {
 
         override fun findListAndRun(process: (Lists) -> Unit) {
             argument?.findListAndRun(process)
+        }
+
+        override fun findBracketAndRun(bracket: String, process: (Lists) -> Unit) {
+            argument?.findBracketAndRun(bracket, process)
         }
 
         override fun text(): String {
@@ -601,12 +623,12 @@ class CodeBlock {
             var flagElse = false
 
             var block = lists.block(index)
+            lineNO = block?.lineNO() ?: 0
+
             if ((block == null) || (block.type() != Type.WORD) || ((block as Word).codeNO() != codeNO))
                 throw Errors.Logic("CodeBlock.BlockIf line:$lineNO")
 
             lists.removeAt(index)
-
-            lineNO = block.lineNO()
 
             while (index < lists.size()) {
                 block = lists.block(index)!!
@@ -701,7 +723,8 @@ class CodeBlock {
                     break
                 }
             }
-            if (conditions == null || statement == null) throw Errors.Syntax(Errors.Key.SYNTAX, lineNO = lineNO)
+            if (conditions == null || statement == null)
+                throw Errors.Syntax(Errors.Key.SYNTAX, lineNO = lineNO)
         }
 
         private fun getLoopType(type: Type): Syntax.Reserved.Key {
@@ -746,6 +769,103 @@ class CodeBlock {
             statement?.let { text += it.dump("$shift  ") }
 
             text += "$shift[ $name end ]\n"
+            return text
+        }
+    }
+
+    class BlockWhen() : Common(Type.WHEN, Syntax.Reserved.Word.WHEN, 0) {
+        var subject: Common? = null
+        val itemList: MutableList<ItemWhen> = mutableListOf()
+        var elseStatement: Common? = null
+
+        constructor(lists: Lists, index: Int) : this() {
+            val codeNO = Syntax.Reserved.codeNO(Syntax.Reserved.Key.WHEN)
+
+            var block = lists.block(index) ?: throw Errors.Logic("CodeBlock.BlockWhen")
+            lineNO = block.lineNO()
+            lists.removeAt(index)
+
+            if ((block.type() != Type.WORD) || ((block as Word).codeNO() != codeNO))
+                throw Errors.Logic("CodeBlock.BlockWhen line:$lineNO")
+
+            block = lists.block(index) ?: throw Errors.Logic("CodeBlock.BlockWhen line:$lineNO")
+            lists.removeAt(index)
+
+            if (!(block.type() == Type.BRACKET
+                        && (block as Bracket).chars() == Syntax.Chars.STATEMENT_BRACKET)) {
+                subject = block
+                block = lists.block(index) ?: throw Errors.Logic("CodeBlock.BlockWhen")
+                lists.removeAt(index)
+            }
+            if (block.type() == Type.BRACKET
+                && (block as Bracket).chars() == Syntax.Chars.STATEMENT_BRACKET) {
+
+                val list = block.lists()?.lists()
+                    ?: throw Errors.Syntax(Errors.Key.SYNTAX, " when statement", lineNO)
+                var args = mutableListOf<Common>()
+                var cnt = 0
+
+                while (cnt < list.size) {
+                    block = list[cnt]
+
+                    if (block.type() == Type.SIGN && block.strings() == Syntax.Chars.WHEN_BRANCH) {
+                        cnt ++
+                        if (cnt >= list.size)
+                            throw Errors.Syntax(Errors.Key.SYNTAX, " when statement", lineNO)
+                        val statement = list[cnt]
+
+                        val item = ItemWhen(args, statement)
+                        itemList.add(item)
+                        args = mutableListOf()
+                    }
+                    else if (block.type() == Type.WORD && block.strings() == Syntax.Reserved.Word.ELSE) {
+                        if ((cnt + 2) >= list.size)
+                            throw Errors.Syntax(Errors.Key.SYNTAX, " when else statement", lineNO)
+
+                        cnt ++
+                        block = list[cnt]
+                        if (!(block.type() == Type.SIGN && block.strings() == Syntax.Chars.WHEN_BRANCH))
+                            throw Errors.Syntax(Errors.Key.SYNTAX, " when else ->", lineNO)
+
+                        cnt ++
+                        elseStatement = list[cnt]
+                    }
+                    else {
+                        if (!(block.type() == Type.SIGN && block.strings() == Syntax.Chars.COMMA))
+                            args.add(block)
+                    }
+                    cnt ++
+                }
+            }
+            else {
+                throw Errors.Syntax(Errors.Key.SYNTAX, " when statement", lineNO)
+            }
+        }
+
+        override fun dump(shift: String): String {
+            var text = "$shift[when]\n"
+            text += "$shift  subject = \n"
+            text += subject?.dump("$shift    ")
+
+            itemList.forEach { item ->
+                text += item.dump("$shift  ")
+            }
+            text += "${shift}- close when -\n"
+            return text
+        }
+    }
+
+    class ItemWhen(
+        val arguments: MutableList<Common>,
+        val statement: Common
+    ) {
+        fun dump(shift: String): String {
+            var text = "${shift}arguments =\n"
+            arguments.forEach { arg ->
+                text += arg.dump("$shift  ")
+            }
+            text += "${shift}statement = \n"
+            text += statement.dump("$shift  ")
             return text
         }
     }
@@ -914,6 +1034,15 @@ class CodeBlock {
                 }
             }
             process(this)
+        }
+
+        fun findBracketAndRun(bracket: String, process: (Lists) -> Unit) {
+            list.forEach { block ->
+                if (block.type() == Type.BRACKET || block.type() == Type.LIST
+                    || block.type() == Type.OBJECT_REF || block.type() == Type.FUN_CALL) {
+                    block.findBracketAndRun(bracket, process)
+                }
+            }
         }
 
         fun makeReference(refs: References.Lists) {
