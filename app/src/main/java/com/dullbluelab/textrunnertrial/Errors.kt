@@ -11,12 +11,10 @@ object Errors {
         fun threwMessage() = super.message ?: ""
 
         override val message: String
-            get() = if (lineNO > 0) "${super.message} line:${lineNO.toString()}" else "${super.message}"
+            get() = if (lineNO > 0) "${super.message} line:${lineNO}" else "${super.message}"
     }
 
-    class Logic(message: String) : Exception("Safety stop $message") {
-
-    }
+    class Logic(message: String) : Exception("Safety stop $message")
 
     enum class Key {
         INTERNAL, SYNTAX, SAFETY,

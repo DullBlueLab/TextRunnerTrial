@@ -1,0 +1,79 @@
+const G = 4.9
+const TIMER_COUNT = 50
+const RADIUS = 100
+
+class Main {
+  var circle : Circle()
+  
+  fun run() {
+    $m.setTimer(TIMER_COUNT)
+    $m.tapAction(true)
+  }
+  
+  fun timer(iv: Int) {
+    if (circle.active()) {
+      circle.fall()
+      if (circle.active()) circle.draw()
+    }
+  }
+  
+  fun onTap(x: Double, y: Double) {
+    circle.create(x, y)
+    circle.draw()
+  }
+}
+
+class Circle {
+  var x, y, ty : Double
+  var count, : Double
+  var bcount, bspeed : Double
+  var r, g, b : Double
+  var flagActive : Boolean
+  
+  init() {
+    r = 0.0
+    g = 0.0
+    b = 1.0
+    flagActive = false
+  }
+  
+  fun active() {
+    return (flagActive)
+  }
+  
+  fun fall() {
+    count ++
+    if (bspeed > 0.0) {
+      bcount ++    
+      ty = y - (bspeed * bcount) + G * count.pow(2) / 2
+    }
+    else {
+      ty = y + G * count.pow(2) / 2
+    }
+    if (ty > $m.canvasHeight()) {
+      if (bspeed > 0.0) count = count / 2
+      bspeed = G * (count - 1)
+      bcount = 1
+      count = 1
+      y = $m.canvasHeight()
+      ty = y - (bspeed * bcount) + G * count.pow(2) / 2
+    }
+  }
+  
+  fun draw() {
+    $m.setColor(r, g, b)
+    $m.drawCircle(RADIUS, x, ty)
+    $m.drawUp()
+  }
+  
+  fun create(nx: Double, ny: Double) {
+    x = nx
+    y = ny
+    count = 0.0
+    bspeed = 0.0
+    bcount = 0.0
+    flagActive = true
+  }
+}
+
+  

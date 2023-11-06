@@ -19,7 +19,7 @@ class RunnerViewModel : ViewModel() {
     data class UiState(
         var sourceText: String = "",
         var codeText: String = "",
-        var consoleText: String = "",
+        var consoleText: String = "Console",
 
         var drawingQueue: Drawing.Lists = Drawing.Lists(),
 
@@ -35,7 +35,7 @@ class RunnerViewModel : ViewModel() {
     private var setting: Setting = Setting()
     fun setting() = setting
 
-    class Status() {
+    class Status {
         var canvasSize: Size = Size(0f, 0f)
 
         var runnerActive: Boolean = false
@@ -71,9 +71,16 @@ class RunnerViewModel : ViewModel() {
 
     private val runner = Runner(this)
 
+    //private var text_success = ""
+    //private var text_timer_stop = ""
+
     fun setup(activity: MainActivity) {
         setting.setup(activity)
         setting.load()
+
+        updateConsole(activity.getString(R.string.label_console))
+        //text_success = activity.getString(R.string.label_success)
+        //text_timer_stop = activity.getString(R.string.label_timer_stop)
     }
 
     fun testSetup() {
@@ -98,6 +105,9 @@ class RunnerViewModel : ViewModel() {
             dumpText = codes.dump()
 
             if (status.errorCount == 0) runner.run(codes)
+
+            //if (status.errorCount == 0 && status.timerCount == 0L)
+            //    updateConsole(text_success)
         }
         catch (e: Exception) {
             error("${Errors.message(Errors.Key.SAFETY)} ${e.message}")
@@ -113,6 +123,7 @@ class RunnerViewModel : ViewModel() {
 
     fun stop() {
         runner.stop()
+        //if (flag) updateConsole(text_timer_stop)
     }
 
     fun restart() {
@@ -165,6 +176,15 @@ class RunnerViewModel : ViewModel() {
     }
 
     fun updateConsole() {
+        _uiState.update { state ->
+            state.copy(
+                consoleText = console.textAll
+            )
+        }
+    }
+
+    fun updateConsole(text: String) {
+        console.append(text)
         _uiState.update { state ->
             state.copy(
                 consoleText = console.textAll

@@ -60,6 +60,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                     runnerViewModel?.updateSourceText(strings)
+                    runnerViewModel?.updateConsole(getString(R.string.label_loaded))
                 }
             }
             catch (e: Exception) {

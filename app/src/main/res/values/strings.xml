@@ -47,4 +47,8 @@
     <string name="button_dump">Dump</string>
     <string name="text_dump">You can see a list of program code analysis</string>
     <string name="title_tool">Tool</string>
+    <string name="label_console">\> Simply programming language Cormoo 1.1\n\> let\'s start!</string>
+    <string name="label_loaded">\> Loaded</string>
+    <string name="label_success">\> Success!</string>
+    <string name="label_timer_stop">\> Runner stop</string>
 </resources>

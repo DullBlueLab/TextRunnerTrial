@@ -1,7 +1,7 @@
 package com.dullbluelab.textrunnertrial.ui
 
 
-class Console() {
+class Console {
     var text: String = ""
     var textAll: String = ""
     var textError: String = ""
@@ -12,13 +12,13 @@ class Console() {
     }
 
     fun appendError(text: String) {
-        textAll += text + "\n"
-        textError += text + "\n"
+        textAll += "> $text \n"
+        textError += "> $text \n"
     }
 
-    fun clearError() {
+    /*fun clearError() {
         textError = ""
-    }
+    }*/
 
     fun clear() {
         text = ""

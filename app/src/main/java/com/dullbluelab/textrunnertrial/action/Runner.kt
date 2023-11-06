@@ -39,6 +39,7 @@ class Runner(
     fun run(codes: CodeUnit) {
         try {
             mainObject = null
+            timer = null
             this.codes = codes
             spaces.setup(codes.reference())
 
