@@ -4,36 +4,53 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.dullbluelab.textrunnertrial.action.Drawing
 import com.dullbluelab.textrunnertrial.action.Runner
+import com.dullbluelab.textrunnertrial.data.SettingItem
+import com.dullbluelab.textrunnertrial.data.UserPreferencesRepository
 import com.dullbluelab.textrunnertrial.logic.Parser
 import com.dullbluelab.textrunnertrial.ui.Console
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.time.OffsetDateTime
 
-class RunnerViewModel : ViewModel() {
+class RunnerViewModel(
+    private val preferences: UserPreferencesRepository
+) : ViewModel() {
 
     data class UiState(
         var sourceText: String = "",
         var codeText: String = "",
-        var consoleText: String = "Console",
+        var consoleText: String = "",
 
         var drawingQueue: Drawing.Lists = Drawing.Lists(),
 
-        var timerLimit: Long = 0L,
-        var loopLimit: Int = 0,
-        var functionLimit: Int = 0,
+        var timerLimit: String = "",
+        var loopLimit: String = "",
+        var functionLimit: String = "",
 
-        var flagGuideDialog: Boolean = false
+        var flagGuideDialog: Boolean = false,
+        var flagClearDataDialog: Boolean = false
     )
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
-    private var setting: Setting = Setting()
-    fun setting() = setting
+    val setting: StateFlow<SettingItem> = preferences.setting
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000L),
+            initialValue = SettingItem()
+        )
 
     class Status {
         var canvasSize: Size = Size(0f, 0f)
@@ -74,18 +91,21 @@ class RunnerViewModel : ViewModel() {
     //private var text_success = ""
     //private var text_timer_stop = ""
 
-    fun setup(activity: MainActivity) {
-        setting.setup(activity)
-        setting.load()
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val application = (this[APPLICATION_KEY] as RunnerApplication)
+                RunnerViewModel(application.userPreferencesRepository)
+            }
+        }
+    }
 
-        updateConsole(activity.getString(R.string.label_console))
+/*    fun setup(activity: MainActivity) {
+        //updateConsole(activity.getString(R.string.text_console))
         //text_success = activity.getString(R.string.label_success)
         //text_timer_stop = activity.getString(R.string.label_timer_stop)
     }
-
-    fun testSetup() {
-        setting.initialize()
-    }
+*/
 
     fun updateSourceText(text: String) {
         _uiState.update { state ->
@@ -208,48 +228,82 @@ class RunnerViewModel : ViewModel() {
         }
     }
 
-    fun setupSettingValue() {
+    fun requestClearDataDialog(flag: Boolean) {
         _uiState.update { state ->
             state.copy(
-                timerLimit = setting.timerLimit,
-                loopLimit = setting.loopLimit,
-                functionLimit = setting.functionLimit
+                flagClearDataDialog = flag
+            )
+        }
+    }
+
+    fun clearAllData() {
+        viewModelScope.launch {
+            preferences.clearDataStore()
+        }
+        clear()
+    }
+
+    fun updateSettingValue() {
+        _uiState.update { state ->
+            state.copy(
+                timerLimit = setting.value.timerLimit.toString(),
+                loopLimit = setting.value.loopLimit.toString(),
+                functionLimit = setting.value.functionLimit.toString()
             )
         }
     }
 
     fun updateTimerLimit(text: String) {
-        val value = if (text.isDigitsOnly() && text.isNotEmpty()) text.toLong() else 0L
         _uiState.update { state ->
             state.copy(
-                timerLimit = value
+                timerLimit = text
             )
         }
     }
 
     fun updateLoopLimit(text: String) {
-        val value = if (text.isDigitsOnly() && text.isNotEmpty()) text.toInt() else 0
         _uiState.update { state ->
             state.copy(
-                loopLimit = value
+                loopLimit = text
             )
         }
     }
 
     fun updateFuncLimit(text: String) {
-        val value = if (text.isDigitsOnly() && text.isNotEmpty()) text.toInt() else 0
         _uiState.update { state ->
             state.copy(
-                functionLimit = value
+                functionLimit = text
             )
         }
     }
 
     fun saveSettingValue() {
-        setting.timerLimit = _uiState.value.timerLimit
-        setting.loopLimit = _uiState.value.loopLimit
-        setting.functionLimit = _uiState.value.functionLimit
-        setting.safetyCheck()
-        setting.save()
+        var text = _uiState.value.timerLimit
+        val timerLimit = if (text.isDigitsOnly() && text.isNotEmpty()) text.toLong() else 0
+
+        text = _uiState.value.loopLimit
+        val loopLimit = if (text.isDigitsOnly() && text.isNotEmpty()) text.toInt() else 0
+
+        text = _uiState.value.functionLimit
+        val functionLimit = if (text.isDigitsOnly() && text.isNotEmpty()) text.toInt() else 0
+
+        val newSetting = SettingItem(
+            timerLimit = timerLimit,
+            loopLimit = loopLimit,
+            functionLimit = functionLimit
+        )
+        viewModelScope.launch {
+            preferences.saveSetting(newSetting)
+        }
     }
+
+    fun saveGuideDialog(flag: Boolean) {
+        viewModelScope.launch {
+            preferences.saveGuideDialog(flag)
+        }
+    }
+
+    fun settingSafetyCheck(key: String, text: String): Boolean =
+        if (text.isDigitsOnly() && text.isNotEmpty()) preferences.safetyCheck(key, text.toInt())
+        else false
 }

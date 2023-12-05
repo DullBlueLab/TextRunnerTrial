@@ -228,7 +228,7 @@ class Machine(
 
         if (delay == null) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.SET_TIMER)
 
-        if (delay < vm.setting().timerLimit) delay = vm.setting().timerLimit
+        if (delay < vm.setting.value.timerLimit) delay = vm.setting.value.timerLimit
         status.timerCount = delay
         return voids
     }

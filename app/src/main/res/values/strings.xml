@@ -47,8 +47,14 @@
     <string name="button_dump">Dump</string>
     <string name="text_dump">You can see a list of program code analysis</string>
     <string name="title_tool">Tool</string>
-    <string name="label_console">\> Simply programming language Cormoo 1.1\n\> let\'s start!</string>
+    <string name="text_console">\> Simply programming language Cormoo 1.1</string>
+    <string name="title_console">Console</string>
     <string name="label_loaded">\> Loaded</string>
     <string name="label_success">\> Success!</string>
     <string name="label_timer_stop">\> Runner stop</string>
+    <string name="clear_data_title">Clear data</string>
+    <string name="clear_data_text">Clear data and return settings to default values. Please note that deleted data cannot be recovered.</string>
+    <string name="button_clear_data">Clear</string>
+    <string name="label_warning">Warning</string>
+    <string name="text_clear_data_dialog">Clear data. is this good?</string>
 </resources>

@@ -13,21 +13,15 @@ import com.dullbluelab.textrunnertrial.ui.theme.TextRunnerTrialTheme
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-private var runnerViewModel: RunnerViewModel? = null
-
 class MainActivity : ComponentActivity() {
 
     private var getContent: ActivityResultLauncher<String>? = null
+    var runnerViewModel: RunnerViewModel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val guidanceUrl = getString(R.string.guidance_url)
 
         super.onCreate(savedInstanceState)
-
-        if (runnerViewModel == null) {
-            runnerViewModel = RunnerViewModel()
-            runnerViewModel?.setup(this)
-        }
 
         registerLoadText(this)
         Errors.loadResource(this)
@@ -37,7 +31,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             TextRunnerTrialTheme {
                 TextRunnerApp(
-                    viewModel = runnerViewModel!!,
+                    activity = this,
                     launchLoadText = { launchLoadText() },
                     onLinkGuideClicked = { openWebPage(guidanceUrl) }
                 )

@@ -465,7 +465,7 @@ class Runner(
         def: CodeBlock.FunDef, objectArg: MutableList<Objects.Common>): Objects.Common {
 
         status.functionCount ++
-        if (status.functionCount > vm.setting().functionLimit) {
+        if (status.functionCount > vm.setting.value.functionLimit) {
             throw Errors.Syntax(Errors.Key.LIMIT_FUNC, lineNO = def.lineNO())
         }
 
@@ -515,7 +515,7 @@ class Runner(
             && ((loops as Objects.Booleans).valueBoolean()) ) {
 
             loopCount ++
-            if (loopCount > vm.setting().loopLimit) throw Errors.Syntax(Errors.Key.LIMIT_OVER, " while", block.lineNO())
+            if (loopCount > vm.setting.value.loopLimit) throw Errors.Syntax(Errors.Key.LIMIT_OVER, " while", block.lineNO())
 
             result = executeBlock(statement)
             if (result.typeError()) return result
@@ -544,7 +544,7 @@ class Runner(
 
         while (loopFlag) {
             loopCount ++
-            if (loopCount > vm.setting().loopLimit)
+            if (loopCount > vm.setting.value.loopLimit)
                 throw Errors.Syntax(Errors.Key.LIMIT_OVER, " for", block.lineNO())
 
             val flag = executeBlock(condition)

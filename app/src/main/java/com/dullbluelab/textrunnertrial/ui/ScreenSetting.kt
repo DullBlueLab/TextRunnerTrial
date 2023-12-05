@@ -1,6 +1,8 @@
 package com.dullbluelab.textrunnertrial.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -9,8 +11,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -48,35 +54,74 @@ fun ScreenSetting(
         Text(
             text = stringResource(id = R.string.label_timer_limit)
         )
-        TextField(
-            value = uiState.timerLimit.toString(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.width(200.dp).align(Alignment.End).padding(8.dp),
-            onValueChange = { viewModel.updateTimerLimit(it) },
-        )
+        Row(
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (!viewModel.settingSafetyCheck("timer", uiState.timerLimit)) {
+                Icon(
+                    imageVector = Icons.Filled.Warning,
+                    contentDescription = "Warning",
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+            TextField(
+                value = uiState.timerLimit,
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.width(200.dp).padding(8.dp),
+                onValueChange = { viewModel.updateTimerLimit(it) },
+            )
+        }
         Spacer(modifier = Modifier.size(32.dp))
         Text(
             text = stringResource(id = R.string.label_loop_limit)
         )
-        TextField(
-            value = uiState.loopLimit.toString(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.width(200.dp).align(Alignment.End).padding(8.dp),
-            onValueChange = { viewModel.updateLoopLimit(it) }
-        )
+        Row(
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (!viewModel.settingSafetyCheck("loop", uiState.loopLimit)) {
+                Icon(
+                    imageVector = Icons.Filled.Warning,
+                    contentDescription = "Warning",
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+            TextField(
+                value = uiState.loopLimit,
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.width(200.dp).padding(8.dp),
+                onValueChange = { viewModel.updateLoopLimit(it) }
+            )
+        }
         Spacer(modifier = Modifier.size(32.dp))
         Text(
             text = stringResource(id = R.string.label_func_limit)
         )
-        TextField(
-            value = uiState.functionLimit.toString(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.width(200.dp).align(Alignment.End).padding(8.dp),
-            onValueChange = { viewModel.updateFuncLimit(it) },
-        )
+        Row(
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (!viewModel.settingSafetyCheck("func", uiState.functionLimit)) {
+                Icon(
+                    imageVector = Icons.Filled.Warning,
+                    contentDescription = "Warning",
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+            TextField(
+                value = uiState.functionLimit,
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.width(200.dp).padding(8.dp),
+                onValueChange = { viewModel.updateFuncLimit(it) },
+            )
+        }
         Spacer(modifier = Modifier.size(64.dp))
         Text(
             text = stringResource(id = R.string.title_tool),
@@ -92,6 +137,23 @@ fun ScreenSetting(
         ) {
             Text(
                 text = stringResource(id = R.string.button_dump)
+            )
+        }
+        Spacer(modifier = Modifier.size(64.dp))
+        Text(
+            text = stringResource(id = R.string.clear_data_title),
+            fontSize = 24.sp
+        )
+        Spacer(modifier = Modifier.size(32.dp))
+        Text(
+            text = stringResource(id = R.string.clear_data_text)
+        )
+        Button(
+            onClick = { viewModel.requestClearDataDialog(true) },
+            modifier = Modifier.align(Alignment.End).padding(8.dp),
+        ) {
+            Text(
+                text = stringResource(id = R.string.button_clear_data)
             )
         }
     }

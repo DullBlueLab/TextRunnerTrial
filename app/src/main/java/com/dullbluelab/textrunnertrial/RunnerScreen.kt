@@ -19,12 +19,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.dullbluelab.textrunnertrial.ui.ClearDataDialog
 import com.dullbluelab.textrunnertrial.ui.GuideDialog
 import com.dullbluelab.textrunnertrial.ui.ScreenDrawing
 import com.dullbluelab.textrunnertrial.ui.ScreenHome
@@ -33,6 +35,107 @@ import com.dullbluelab.textrunnertrial.ui.ScreenSetting
 
 enum class RunnerScreen {
     Home, Drawing, Execute, Setting
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TextRunnerApp(
+    activity: MainActivity,
+    viewModel: RunnerViewModel = viewModel(factory = RunnerViewModel.Factory),
+    launchLoadText: () -> Unit,
+    onLinkGuideClicked: () -> Unit,
+) {
+    val navController = rememberNavController()
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val uiState by viewModel.uiState.collectAsState()
+    val setting by viewModel.setting.collectAsState()
+    activity.runnerViewModel = viewModel
+
+    if (destinationListener == null) {
+        val listener = makeDestinationListener(viewModel)
+        navController.addOnDestinationChangedListener(listener)
+    }
+
+    Scaffold(
+        topBar = {
+            RunnerAppBar(
+                canNavigateBack = navController.previousBackStackEntry != null,
+                currentScreen = backStackEntry?.destination?.route ?: RunnerScreen.Home.name,
+                navigateUp = {
+                    navController.navigateUp()
+                },
+                onGuideButtonClicked = {
+                    if (setting.flagGuideDialog) viewModel.updateGuideDialog(true)
+                    else onLinkGuideClicked()
+                },
+                onSettingButtonClicked = {
+                    navController.navigate(RunnerScreen.Setting.name)
+                }
+            )
+        }
+    ) { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = RunnerScreen.Home.name,
+            modifier = Modifier.padding(innerPadding)
+        ) {
+            composable(route = RunnerScreen.Home.name) {
+                ScreenHome(
+                    viewModel = viewModel,
+                    onExecuteButtonClicked = {
+                        viewModel.run()
+                        if (viewModel.status().errorCount == 0) {
+                            navController.navigate(RunnerScreen.Drawing.name)
+                        }
+                    },
+                    onClearButtonClicked = {
+                        viewModel.clear()
+                    },
+                    launchLoadText = {
+                        launchLoadText()
+                    }
+                )
+                if (uiState.flagGuideDialog) {
+                    GuideDialog(
+                        onBrowse = {
+                            viewModel.updateGuideDialog(false)
+                            viewModel.saveGuideDialog(false)
+                            onLinkGuideClicked()
+                        },
+                        onCancel = {
+                            viewModel.updateGuideDialog(false)
+                        }
+                    )
+                }
+            }
+            composable(route = RunnerScreen.Drawing.name) {
+                ScreenDrawing(viewModel)
+            }
+            composable(route = RunnerScreen.Execute.name) {
+                ScreenExecute(viewModel)
+            }
+            composable(route = RunnerScreen.Setting.name) {
+                ScreenSetting(
+                    viewModel,
+                    onDumpClicked = {
+                        navController.navigate(RunnerScreen.Execute.name)
+                    }
+                )
+                if (uiState.flagClearDataDialog) {
+                    ClearDataDialog(
+                        onClear = {
+                            viewModel.requestClearDataDialog(false)
+                            navController.navigateUp()
+                            viewModel.clearAllData()
+                        },
+                        onCancel = {
+                            viewModel.requestClearDataDialog(false)
+                        }
+                    )
+                }
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -93,92 +196,6 @@ fun RunnerAppBar(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TextRunnerApp(
-    viewModel: RunnerViewModel,
-    launchLoadText: () -> Unit,
-    onLinkGuideClicked: () -> Unit,
-
-) {
-    val navController = rememberNavController()
-    val backStackEntry by navController.currentBackStackEntryAsState()
-    val uiState by viewModel.uiState.collectAsState()
-
-    if (destinationListener == null) {
-        val listener = makeDestinationListener(viewModel)
-        navController.addOnDestinationChangedListener(listener)
-    }
-
-    Scaffold(
-        topBar = {
-            RunnerAppBar(
-                canNavigateBack = navController.previousBackStackEntry != null,
-                currentScreen = backStackEntry?.destination?.route ?: RunnerScreen.Home.name,
-                navigateUp = {
-                    navController.navigateUp()
-                },
-                onGuideButtonClicked = {
-                    viewModel.updateGuideDialog(true)
-                },
-                onSettingButtonClicked = {
-                    navController.navigate(RunnerScreen.Setting.name)
-                }
-            )
-        }
-    ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = RunnerScreen.Home.name,
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            composable(route = RunnerScreen.Home.name) {
-                ScreenHome(
-                    viewModel = viewModel,
-                    onExecuteButtonClicked = {
-                        viewModel.run()
-                        if (viewModel.status().errorCount == 0) {
-                            navController.navigate(RunnerScreen.Drawing.name)
-                        }
-                    },
-                    onClearButtonClicked = {
-                        viewModel.clear()
-                    },
-                    launchLoadText = {
-                        launchLoadText()
-                    }
-                )
-                if (uiState.flagGuideDialog) {
-                    GuideDialog(
-                        onBrowse = {
-                            viewModel.updateGuideDialog(false)
-                            onLinkGuideClicked()
-                        },
-                        onCancel = {
-                            viewModel.updateGuideDialog(false)
-                        }
-                    )
-                }
-            }
-            composable(route = RunnerScreen.Drawing.name) {
-                ScreenDrawing(viewModel)
-            }
-            composable(route = RunnerScreen.Execute.name) {
-                ScreenExecute(viewModel)
-            }
-            composable(route = RunnerScreen.Setting.name) {
-                viewModel.setupSettingValue()
-                ScreenSetting(
-                    viewModel,
-                    onDumpClicked = {
-                        navController.navigate(RunnerScreen.Execute.name)
-                    }
-                )
-            }
-        }
-    }
-}
-
 class DestinationListener(private val viewModel: RunnerViewModel)
     : NavController.OnDestinationChangedListener {
 
@@ -195,6 +212,10 @@ class DestinationListener(private val viewModel: RunnerViewModel)
         else if (viewModel.screenPosition == RunnerScreen.Setting.name
             && destination.route != RunnerScreen.Setting.name) {
             viewModel.saveSettingValue()
+        }
+        else if (viewModel.screenPosition != RunnerScreen.Setting.name
+            && destination.route == RunnerScreen.Setting.name) {
+            viewModel.updateSettingValue()
         }
         viewModel.screenPosition = destination.route ?: ""
     }

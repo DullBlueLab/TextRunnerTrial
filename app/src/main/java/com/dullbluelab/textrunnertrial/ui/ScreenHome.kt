@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -18,6 +19,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -49,10 +51,16 @@ fun ScreenHome(
             value = uiState.sourceText,
             keyboardOptions = KeyboardOptions.Default,
             modifier = Modifier
-                .weight(2.5f)
+                .weight(2.0f)
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState()),
             onValueChange = { viewModel.updateSourceText(it) }
+        )
+        Text(
+            text = stringResource(id = R.string.title_console),
+            modifier = Modifier
+                .padding(8.dp).align(Alignment.CenterHorizontally)
+
         )
         Text(
             text = uiState.consoleText,
@@ -67,7 +75,7 @@ fun ScreenHome(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
-                .weight(1.0f, false)
+                .height(36.dp)
         ) {
             Button(
                 modifier = Modifier,
