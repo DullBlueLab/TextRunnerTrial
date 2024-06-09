@@ -123,6 +123,14 @@ class Drawing {
             list.add(item)
         }
 
+        fun drawImage(image: ImageBitmap,
+                      srcOffset: IntOffset, srcSize: IntSize,
+                      dstOffset: IntOffset, dstSize: IntSize,
+                      option: Option) {
+            val item = Images(image, srcOffset, srcSize, dstOffset, dstSize, option.alpha)
+            list.add(item)
+        }
+
         fun clear() {
             list.clear()
         }

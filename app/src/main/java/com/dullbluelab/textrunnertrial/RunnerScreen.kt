@@ -3,7 +3,8 @@ package com.dullbluelab.textrunnertrial
 import android.os.Bundle
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -26,28 +27,29 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.dullbluelab.textrunnertrial.ui.ClearDataDialog
-import com.dullbluelab.textrunnertrial.ui.GuideDialog
 import com.dullbluelab.textrunnertrial.ui.ScreenDrawing
 import com.dullbluelab.textrunnertrial.ui.ScreenHome
 import com.dullbluelab.textrunnertrial.ui.ScreenExecute
 import com.dullbluelab.textrunnertrial.ui.ScreenSetting
+import com.dullbluelab.textrunnertrial.ui.library.ItemScreen
+import com.dullbluelab.textrunnertrial.ui.library.LibraryScreen
+import com.dullbluelab.textrunnertrial.ui.library.LibraryViewModel
 
 enum class RunnerScreen {
-    Home, Drawing, Execute, Setting
+    Home, Drawing, Execute, Setting, Library, Item
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TextRunnerApp(
     activity: MainActivity,
-    viewModel: RunnerViewModel = viewModel(factory = RunnerViewModel.Factory),
+    viewModel: RunnerViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    libraryViewModel: LibraryViewModel = viewModel(factory = AppViewModelProvider.Factory),
     launchLoadText: () -> Unit,
     onLinkGuideClicked: () -> Unit,
 ) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
-    val uiState by viewModel.uiState.collectAsState()
+    //val uiState by viewModel.uiState.collectAsState()
     val setting by viewModel.setting.collectAsState()
     activity.runnerViewModel = viewModel
 
@@ -67,6 +69,9 @@ fun TextRunnerApp(
                 onGuideButtonClicked = {
                     if (setting.flagGuideDialog) viewModel.updateGuideDialog(true)
                     else onLinkGuideClicked()
+                },
+                onLibraryButtonClicked = {
+                    navController.navigate(RunnerScreen.Library.name)
                 },
                 onSettingButtonClicked = {
                     navController.navigate(RunnerScreen.Setting.name)
@@ -91,22 +96,11 @@ fun TextRunnerApp(
                     onClearButtonClicked = {
                         viewModel.clear()
                     },
+                    onLinkGuideClicked = onLinkGuideClicked,
                     launchLoadText = {
                         launchLoadText()
                     }
                 )
-                if (uiState.flagGuideDialog) {
-                    GuideDialog(
-                        onBrowse = {
-                            viewModel.updateGuideDialog(false)
-                            viewModel.saveGuideDialog(false)
-                            onLinkGuideClicked()
-                        },
-                        onCancel = {
-                            viewModel.updateGuideDialog(false)
-                        }
-                    )
-                }
             }
             composable(route = RunnerScreen.Drawing.name) {
                 ScreenDrawing(viewModel)
@@ -114,25 +108,29 @@ fun TextRunnerApp(
             composable(route = RunnerScreen.Execute.name) {
                 ScreenExecute(viewModel)
             }
-            composable(route = RunnerScreen.Setting.name) {
-                ScreenSetting(
-                    viewModel,
-                    onDumpClicked = {
-                        navController.navigate(RunnerScreen.Execute.name)
+            composable(route = RunnerScreen.Library.name) {
+                LibraryScreen(
+                    viewModel = libraryViewModel,
+                    onItemClick = { navController.navigate(RunnerScreen.Item.name) },
+                    onLoadClick = {
+                        activity.loadImageFile(success = { bitmapDrawable, uri ->
+                            libraryViewModel.loadImage(bitmapDrawable, uri)
+                            navController.navigate(RunnerScreen.Item.name)
+                        })
                     }
                 )
-                if (uiState.flagClearDataDialog) {
-                    ClearDataDialog(
-                        onClear = {
-                            viewModel.requestClearDataDialog(false)
-                            navController.navigateUp()
-                            viewModel.clearAllData()
-                        },
-                        onCancel = {
-                            viewModel.requestClearDataDialog(false)
-                        }
-                    )
-                }
+            }
+            composable(route = RunnerScreen.Item.name) {
+                ItemScreen(
+                    viewModel = libraryViewModel,
+                    done = { navController.navigateUp() }
+                )
+            }
+            composable(route = RunnerScreen.Setting.name) {
+                ScreenSetting(
+                    viewModel = viewModel,
+                    onDumpClicked = { navController.navigate(RunnerScreen.Execute.name) }
+                )
             }
         }
     }
@@ -146,6 +144,7 @@ fun RunnerAppBar(
     navigateUp: () -> Unit,
     onGuideButtonClicked: () -> Unit,
     onSettingButtonClicked: () -> Unit,
+    onLibraryButtonClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val title = when(currentScreen) {
@@ -164,7 +163,7 @@ fun RunnerAppBar(
             if (canNavigateBack) {
                 IconButton(onClick = navigateUp) {
                     Icon(
-                        imageVector = Icons.Filled.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = stringResource(R.string.back_button)
                     )
                 }
@@ -172,20 +171,19 @@ fun RunnerAppBar(
         },
         actions = {
             if (currentScreen == "Home") {
-                IconButton(
-                    onClick = {
-                        onGuideButtonClicked()
-                    }
-                ) {
+                IconButton(onClick = { onGuideButtonClicked() }) {
                     Icon(
                         painter = painterResource(id = R.drawable.help_24px),
-                        contentDescription = stringResource(id = R.string.icon_guide))
+                        contentDescription = stringResource(id = R.string.icon_guide)
+                    )
                 }
-                IconButton(
-                    onClick = {
-                        onSettingButtonClicked()
-                    }
-                ) {
+                IconButton(onClick = { onLibraryButtonClicked() }) {
+                    Icon(
+                        imageVector = Icons.Filled.DateRange,
+                        contentDescription = stringResource(id = R.string.name_library)
+                    )
+                }
+                IconButton(onClick = { onSettingButtonClicked() }) {
                     Icon(
                         imageVector = Icons.Filled.Settings,
                         contentDescription = stringResource(id = R.string.setting_button)

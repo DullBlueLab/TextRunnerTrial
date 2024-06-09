@@ -2,6 +2,7 @@ package com.dullbluelab.textrunnertrial.logic
 
 import com.dullbluelab.textrunnertrial.Errors
 import com.dullbluelab.textrunnertrial.RunnerViewModel
+import com.dullbluelab.textrunnertrial.block.*
 
 class Parser(
     private val vm: RunnerViewModel
@@ -30,8 +31,8 @@ class Parser(
         return codes
     }
 
-    private fun makeCodeBlockList(box: TextBox, codes: CodeUnit): CodeBlock.Lists {
-        val blocks = CodeBlock.Lists("")
+    private fun makeCodeBlockList(box: TextBox, codes: CodeUnit): BlockLists {
+        val blocks = BlockLists("")
         var isBracketEnd = false
 
         while (!box.isEnd() && !isBracketEnd && status.errorCount == 0) {
@@ -44,13 +45,13 @@ class Parser(
                 box.trimLineComment()
             }
             else if (Syntax.Chars.isMatch(startChar, Syntax.Chars.Type.WORD_START)) {
-                blocks.append(CodeBlock.Word(box, codes.wordList()))
+                blocks.append(BlockWord(box, codes.wordList()))
             }
             else if (Syntax.Chars.isMatch(startChar, Syntax.Chars.Type.NUMBER_START)) {
-                blocks.append(CodeBlock.Number(box))
+                blocks.append(BlockNumber(box))
             }
             else if (Syntax.Chars.isMatch(startChar, Syntax.Chars.Type.SIGN)) {
-                blocks.append(CodeBlock.Sign(box))
+                blocks.append(BlockSign(box))
             }
             else if (Syntax.Chars.isMatch(startChar, Syntax.Chars.Type.BRACKET_START)) {
                 val block = extractBracketSet(box, codes)
@@ -60,7 +61,7 @@ class Parser(
                 isBracketEnd = true
             }
             else if (Syntax.Chars.isMatch(startChar, Syntax.Chars.Type.STRING_BRACKET)) {
-                blocks.append(CodeBlock.Strings(box))
+                blocks.append(BlockStrings(box))
             }
             else {
                 box.inc()
@@ -69,11 +70,11 @@ class Parser(
         return blocks
     }
 
-    private fun extractBracketSet(box: TextBox, codes: CodeUnit): CodeBlock.Common {
+    private fun extractBracketSet(box: TextBox, codes: CodeUnit): CodeBlock {
         val startBracket = box.getInc()
         val lineNO = box.lineNO
 
-        val block: CodeBlock.Lists = makeCodeBlockList(box, codes)
+        val block: BlockLists = makeCodeBlockList(box, codes)
         val endBracket = box.getInc()
 
         if (startBracket == null || endBracket == null) throw Errors.Syntax(Errors.Key.BRACKET, lineNO = lineNO)
@@ -82,10 +83,10 @@ class Parser(
             throw Errors.Syntax("${Errors.message(Errors.Key.NOT_MATCH_BRACKET)} $startBracket to $endBracket", lineNO)
 
         val bracketChars = startBracket.toString() + endBracket.toString()
-        return CodeBlock.Bracket(bracketChars, block, lineNO)
+        return BlockBracket(bracketChars, block, lineNO)
     }
 
-    private fun buildBlock(lists: CodeBlock.Lists) {
+    private fun buildBlock(lists: BlockLists) {
         lists.findBracketAndRun(Syntax.Chars.COMMA_BRACKET) { list -> list.buildCommaLists() }
         lists.findListAndRun { list -> makeFunCall(list) }
         lists.findListAndRun { list -> makeOperator(list, ".") }
@@ -97,7 +98,7 @@ class Parser(
         makeDefinitionBlock(lists)
     }
 
-    private fun buildOperators(lists: CodeBlock.Lists) {
+    private fun buildOperators(lists: BlockLists) {
         for (classNO in Syntax.Operator.MAKING_START .. Syntax.Operator.MAKING_END) {
             val defines = Syntax.Operator.getDefines(classNO)
             if (defines.size > 0) {
@@ -109,7 +110,7 @@ class Parser(
         }
     }
 
-    private fun makeFunCall(lists: CodeBlock.Lists) {
+    private fun makeFunCall(lists: BlockLists) {
         var index = 1
         while (index < lists.size() && status.errorCount == 0) {
             val block = lists.block(index)
@@ -117,22 +118,22 @@ class Parser(
 
             if (block != null && prev != null) {
                 if (block.type() == CodeBlock.Type.BRACKET) {
-                    val bracket = block as CodeBlock.Bracket
+                    val bracket = block as BlockBracket
                     if (bracket.chars() == Syntax.Chars.ARGUMENT_BRACKET
                         && prev.type() == CodeBlock.Type.WORD
-                        && (prev as CodeBlock.Word).reservedKey() == Syntax.Reserved.Key.NON
+                        && (prev as BlockWord).reservedKey() == Syntax.Reserved.Key.NON
                     ) {
                         index --
-                        val newBlock = CodeBlock.FunCall(lists, index)
+                        val newBlock = BlockFunCall(lists, index)
                         lists.removeAt(index)
                         lists.removeAt(index)
                         lists.insert(index, newBlock)
                     }
                     else if (bracket.chars() == Syntax.Chars.LIST_DATA_BRACKET
                         && prev.type() == CodeBlock.Type.WORD
-                        && (prev as CodeBlock.Word).reservedKey() == Syntax.Reserved.Key.LIST_OF
+                        && (prev as BlockWord).reservedKey() == Syntax.Reserved.Key.LIST_OF
                         ) {
-                        val newBlock = CodeBlock.ListValue(bracket)
+                        val newBlock = BlockListValue(bracket)
 
                         index --
                         lists.removeAt(index)
@@ -140,8 +141,8 @@ class Parser(
                         lists.insert(index, newBlock)
                     }
                     else if (bracket.chars() == Syntax.Chars.LIST_INDEX_BRACKET) {
-                        val dotBlock = CodeBlock.Sign(Syntax.Chars.DOT, bracket.lineNO())
-                        val funBlock = CodeBlock.FunCall(Syntax.Method.Word.ITEM, bracket)
+                        val dotBlock = BlockSign(Syntax.Chars.DOT, bracket.lineNO())
+                        val funBlock = BlockFunCall(Syntax.Method.Word.ITEM, bracket)
                         lists.removeAt(index)
                         lists.insert(index, dotBlock)
                         index ++
@@ -153,14 +154,14 @@ class Parser(
         }
     }
 
-    private fun makeOperator(lists: CodeBlock.Lists, sign: String) {
+    private fun makeOperator(lists: BlockLists, sign: String) {
         val def = Syntax.Operator.setting(sign) ?: return
         var index = if (def.prev) 1 else 0
         var endPos = if (def.next) lists.size() - 1 else lists.size()
         while (index < endPos && status.errorCount == 0) {
             val block = lists.block(index) ?: break
             if (block.type() == CodeBlock.Type.SIGN && block.strings() == sign) {
-                val newBlock = CodeBlock.ObjectRef(lists, index, def)
+                val newBlock = BlockObjectRef(lists, index, def)
                 if (newBlock.child(CodeBlock.SUBJECT) != null) {
                     if (def.prev) {
                         index--
@@ -179,12 +180,12 @@ class Parser(
         }
     }
 
-    private fun makeOperator(lists: CodeBlock.Lists, defines: List<Syntax.Operator.Setting>) {
+    private fun makeOperator(lists: BlockLists, defines: List<Syntax.Operator.Setting>) {
         var index = 0
         while (index < lists.size() && status.errorCount == 0) {
             val block = lists.block(index) ?: break
             var def: Syntax.Operator.Setting? = null
-            var newBlock: CodeBlock.Common? = null
+            var newBlock: CodeBlock? = null
             var dp = 0
             while (dp < defines.size && newBlock == null) {
                 if (block.type() == CodeBlock.Type.SIGN && block.strings() == defines[dp].sign) {
@@ -194,7 +195,7 @@ class Parser(
                         else defines[dp]
                 }
                 if (def != null) {
-                    newBlock = CodeBlock.ObjectRef(lists, index, def)
+                    newBlock = BlockObjectRef(lists, index, def)
                     if (newBlock.child(CodeBlock.SUBJECT) != null) {
                         if (def.prev) {
                             index--
@@ -213,7 +214,7 @@ class Parser(
         }
     }
 
-    private fun makeReturnBlock(lists: CodeBlock.Lists) {
+    private fun makeReturnBlock(lists: BlockLists) {
         lists.findListAndRun { list ->
             var index = 0
             while (index < list.size() && status.errorCount == 0) {
@@ -222,7 +223,7 @@ class Parser(
                 if (block.type() == CodeBlock.Type.WORD
                     && block.strings() == Syntax.Reserved.Word.RETURN) {
 
-                    val newBlock = CodeBlock.Returns(list, index)
+                    val newBlock = BlockReturns(list, index)
                     list.insert(index, newBlock)
                 }
                 index ++
@@ -230,7 +231,7 @@ class Parser(
         }
     }
 
-    private fun getConditionType(block: CodeBlock.Common): CodeBlock.Type? {
+    private fun getConditionType(block: CodeBlock): CodeBlock.Type? {
         var type: CodeBlock.Type? = null
         if (block.type() == CodeBlock.Type.WORD) {
             type = when (block.strings()) {
@@ -244,7 +245,7 @@ class Parser(
         return type
     }
 
-    private fun makeConditionBlock(lists: CodeBlock.Lists) {
+    private fun makeConditionBlock(lists: BlockLists) {
         lists.findListAndRun { list ->
             var index = 0
             while (index < list.size() && status.errorCount == 0) {
@@ -253,9 +254,9 @@ class Parser(
 
                 if (type != null) {
                     val condition = when (type) {
-                        CodeBlock.Type.IF -> CodeBlock.BlockIf(list, index)
-                        CodeBlock.Type.WHEN -> CodeBlock.BlockWhen(list, index)
-                        else -> CodeBlock.Condition(list, index, type)
+                        CodeBlock.Type.IF -> BlockIf(list, index)
+                        CodeBlock.Type.WHEN -> BlockWhen(list, index)
+                        else -> BlockCondition(list, index, type)
                     }
 
                     list.insert(index, condition)
@@ -265,54 +266,54 @@ class Parser(
         }
     }
 
-    private fun makeDefinitionBlock(lists: CodeBlock.Lists) {
+    private fun makeDefinitionBlock(lists: BlockLists) {
         // var
         lists.findListAndRun { list ->
             val codeNO = Syntax.Reserved.codeNO(Syntax.Reserved.Key.VAR)
             makeDefSub(list, codeNO) { innerList, index ->
-                CodeBlock.VarDef(innerList, index)
+                BlockVarDef(innerList, index)
             }
         }
         // const
         lists.findListAndRun { list ->
             val codeNO = Syntax.Reserved.codeNO(Syntax.Reserved.Key.CONST)
             makeDefSub(list, codeNO) { innerList, index ->
-                CodeBlock.ConstDef(innerList, index)
+                BlockConstDef(innerList, index)
             }
         }
         // fun
         lists.findListAndRun { list ->
             val codeNO = Syntax.Reserved.codeNO(Syntax.Reserved.Key.FUN)
             makeDefSub(list, codeNO) { innerList, index ->
-                CodeBlock.FunDef(innerList, index)
+                BlockFunDef(innerList, index)
             }
         }
         // init
         lists.findListAndRun { list ->
             val codeNO = Syntax.Reserved.codeNO(Syntax.Reserved.Key.INIT)
             makeDefSub(list, codeNO) { innerList, index ->
-                CodeBlock.InitDef(innerList, index)
+                BlockInitDef(innerList, index)
             }
         }
         // class
         lists.findListAndRun { list ->
             val codeNO = Syntax.Reserved.codeNO(Syntax.Reserved.Key.CLASS)
             makeDefSub(list, codeNO) { innerList, index ->
-                CodeBlock.ClassDef(innerList, index)
+                BlockClassDef(innerList, index)
             }
         }
     }
 
     private fun makeDefSub(
-        lists: CodeBlock.Lists, codeNO: Int,
-        makeDef: (CodeBlock.Lists, Int) -> CodeBlock.Common
+        lists: BlockLists, codeNO: Int,
+        makeDef: (BlockLists, Int) -> CodeBlock
     ) {
         var index = 0
         while (index < lists.size() && status.errorCount == 0) {
             val block = lists.block(index) ?: break
 
             if (block.type() == CodeBlock.Type.WORD
-                && (block as CodeBlock.Word).codeNO() == codeNO) {
+                && (block as BlockWord).codeNO() == codeNO) {
 
                 try {
                     val varDef = makeDef(lists, index)

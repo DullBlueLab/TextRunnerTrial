@@ -1,7 +1,9 @@
 package com.dullbluelab.textrunnertrial.logic
 
 import com.dullbluelab.textrunnertrial.action.Spaces
-
+import com.dullbluelab.textrunnertrial.block.BlockArgumentList
+import com.dullbluelab.textrunnertrial.block.BlockClassDef
+import com.dullbluelab.textrunnertrial.block.CodeBlock
 class References {
 
     enum class Type {
@@ -12,12 +14,12 @@ class References {
     class Sets() {
         private var type: Type = Type.NULL
         private var word: String = ""
-        private var returns: CodeBlock.Common? = null
-        private var arguments: CodeBlock.ArgumentList? = null
-        private var codeRef: CodeBlock.Common? = null
+        private var returns: CodeBlock? = null
+        private var arguments: BlockArgumentList? = null
+        private var codeRef: CodeBlock? = null
         private var childRef: Lists? = null
 
-        constructor(type: Type, word: String, ref: CodeBlock.Common?) : this() {
+        constructor(type: Type, word: String, ref: CodeBlock?) : this() {
             this.type = type
             this.word = word
             this.codeRef = ref
@@ -28,10 +30,10 @@ class References {
         fun codes() = codeRef
 
         fun references(): Lists? =
-            if (type == Type.CLASS) (codeRef as CodeBlock.ClassDef).reference()
+            if (type == Type.CLASS) (codeRef as BlockClassDef).reference()
             else null
 
-        fun setBlock(args: CodeBlock.ArgumentList?, returns: CodeBlock.Common?) {
+        fun setBlock(args: BlockArgumentList?, returns: CodeBlock?) {
             this.arguments = args
             this.returns = returns
         }
@@ -62,21 +64,21 @@ class References {
             this.parent = parent
         }
 
-        fun appendVar(word: String, returns: CodeBlock.Common?, codes: CodeBlock.Common?) {
+        fun appendVar(word: String, returns: CodeBlock?, codes: CodeBlock?) {
             val newSet = Sets(Type.VAR, word, codes)
             newSet.setBlock(args = null, returns)
             lists.add(newSet)
         }
 
-        fun appendConst(word: String, codes: CodeBlock.Common?) {
+        fun appendConst(word: String, codes: CodeBlock?) {
             val newSet = Sets(Type.CONST, word, codes)
             lists.add(newSet)
         }
 
         fun appendFun(
             word: String,
-            args: CodeBlock.ArgumentList?, returns: CodeBlock.Common?,
-            codes: CodeBlock.Common?, childRef: Lists?
+            args: BlockArgumentList?, returns: CodeBlock?,
+            codes: CodeBlock?, childRef: Lists?
         ) {
             val newSet = Sets(Type.FUN, word, codes)
             newSet.setBlock(args, returns)
@@ -84,7 +86,7 @@ class References {
             lists.add(newSet)
         }
 
-        fun appendClass(word: String, codes: CodeBlock.Common?, childRef: Lists?) {
+        fun appendClass(word: String, codes: CodeBlock?, childRef: Lists?) {
             val newSet = Sets(Type.CLASS, word, codes)
             childRef?.let { newSet.setChildRef(it) }
             lists.add(newSet)

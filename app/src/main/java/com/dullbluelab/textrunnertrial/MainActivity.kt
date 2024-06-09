@@ -1,21 +1,28 @@
 package com.dullbluelab.textrunnertrial
 
 import android.content.Intent
+import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import com.dullbluelab.textrunnertrial.ui.theme.TextRunnerTrialTheme
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
+private const val TAG = "MainActivity"
+
 class MainActivity : ComponentActivity() {
 
-    private var getContent: ActivityResultLauncher<String>? = null
+    private var getTextContent: ActivityResultLauncher<String>? = null
+    private var getImageContent: ActivityResultLauncher<String>? = null
+    private var loadedImageListener: ((BitmapDrawable, Uri) -> Unit)? = null
     var runnerViewModel: RunnerViewModel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,7 +30,8 @@ class MainActivity : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
 
-        registerLoadText(this)
+        registerLoadText()
+        registerLoadImage()
         Errors.loadResource(this)
         destinationListener = null
 
@@ -39,8 +47,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun registerLoadText(activity: MainActivity) {
-        getContent = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+    private fun registerLoadText() {
+        getTextContent = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             try {
                 if (uri != null) {
                     var strings = ""
@@ -58,14 +66,42 @@ class MainActivity : ComponentActivity() {
                 }
             }
             catch (e: Exception) {
-                val message = activity.getString(R.string.error_unload_source_file)
-                Toast.makeText(activity, message, Toast.LENGTH_SHORT).show()
+                val message = this.getString(R.string.error_unload_source_file)
+                Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
             }
         }
     }
 
+    private fun registerLoadImage() {
+        getImageContent = registerForActivityResult(
+            ActivityResultContracts.GetContent()
+        ) { uri: Uri? ->
+            try {
+                uri?.let {
+                    contentResolver.openInputStream(it).use { inputStream ->
+                        loadedImageListener?.let { listener ->
+                            listener(BitmapDrawable(resources, inputStream), it)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, e.message, e)
+            }
+        }
+    }
+
+    fun loadImageFile(success: (BitmapDrawable, Uri) -> Unit) {
+        try {
+            loadedImageListener = success
+            getImageContent?.launch("image/png")
+
+        } catch (e: Exception) {
+            Log.e(TAG, e.message, e)
+        }
+    }
+
     private fun launchLoadText() {
-        getContent?.launch("text/plain")
+        getTextContent?.launch("text/plain")
     }
 
     private fun openWebPage(url: String) {
@@ -95,7 +131,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
-        getContent?.unregister()
+        getTextContent?.unregister()
         super.onDestroy()
     }
 }

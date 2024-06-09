@@ -4,13 +4,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import com.dullbluelab.textrunnertrial.action.Drawing
 import com.dullbluelab.textrunnertrial.action.Runner
+import com.dullbluelab.textrunnertrial.data.LibraryRepository
 import com.dullbluelab.textrunnertrial.data.SettingItem
 import com.dullbluelab.textrunnertrial.data.UserPreferencesRepository
 import com.dullbluelab.textrunnertrial.logic.Parser
@@ -25,7 +22,8 @@ import kotlinx.coroutines.launch
 import java.time.OffsetDateTime
 
 class RunnerViewModel(
-    private val preferences: UserPreferencesRepository
+    private val preferences: UserPreferencesRepository,
+    repositories: LibraryRepository
 ) : ViewModel() {
 
     data class UiState(
@@ -86,12 +84,12 @@ class RunnerViewModel(
     private val console = Console()
     fun console() = console
 
-    private val runner = Runner(this)
+    private val runner = Runner(this, repositories)
 
     //private var text_success = ""
     //private var text_timer_stop = ""
 
-    companion object {
+/*    companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = (this[APPLICATION_KEY] as RunnerApplication)
@@ -99,6 +97,7 @@ class RunnerViewModel(
             }
         }
     }
+*/
 
 /*    fun setup(activity: MainActivity) {
         //updateConsole(activity.getString(R.string.text_console))

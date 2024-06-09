@@ -91,9 +91,9 @@ object Syntax {
         enum class Key {
             NON, NULL,
             CLASS, FUN, INIT, SUPER, THIS, RETURN,
-            VAR, CONST,
+            VAR, CONST, IMPORT,
             IF, WHILE, FOR, ELSE, WHEN, TRUE, FALSE, BREAK,
-            INT, DOUBLE, STRING, BOOLEAN, LIST, LIST_OF
+            INT, DOUBLE, STRING, BOOLEAN, LIST, LIST_OF, IMAGE
         }
 
         object Word {
@@ -106,6 +106,7 @@ object Syntax {
             const val INIT = "init"
             const val VAR = "var"
             const val CONST = "const"
+            const val IMPORT = "import"
             const val IF = "if"
             const val FOR = "for"
             const val WHILE = "while"
@@ -121,6 +122,7 @@ object Syntax {
             const val VOID = "Void"
             const val LIST = "List"
             const val LIST_OF = "listOf"
+            const val IMAGE = "Image"
         }
 
         data class Sets(
@@ -140,6 +142,7 @@ object Syntax {
             Sets(Key.INIT,    Word.INIT,    (-10006),  false),
             Sets(Key.VAR,     Word.VAR,     (-10011),  false),
             Sets(Key.CONST,   Word.CONST,   (-10012),  false),
+            Sets(Key.IMPORT,  Word.IMPORT,  (-10013),  false),
             Sets(Key.IF,      Word.IF,      (-10021),  false),
             Sets(Key.WHILE,   Word.WHILE,   (-10022),  false),
             Sets(Key.FOR,     Word.FOR,     (-10023),  false),
@@ -154,6 +157,7 @@ object Syntax {
             Sets(Key.BOOLEAN, Word.BOOLEAN, (-10034),  true ),
             Sets(Key.LIST,    Word.LIST,    (-10035),  false),
             Sets(Key.LIST_OF, Word.LIST_OF, (-10036),  false),
+            Sets(Key.IMAGE,   Word.IMAGE,   (-10037),  false),
         )
 
         fun key(word: String): Key {
@@ -331,6 +335,7 @@ object Syntax {
             const val DRAW_CIRCLE = "drawCircle"
             const val DRAW_LINE = "drawLine"
             const val DRAW_RECT = "drawRect"
+            const val DRAW_IMAGE = "drawImage"
             const val DRAW_UP = "drawUp"
             const val NEW_DRAWING = "newDrawing"
             const val CHANGE_COLOR = "setColor"
@@ -342,6 +347,11 @@ object Syntax {
             const val SET_TIMER = "setTimer"
             const val CANCEL_TIMER = "cancelTimer"
             const val TAP_ACTION = "tapAction"
+            const val IS_LOADED = "isLoaded"
+
+            const val CROP = "crop"
+            const val WIDTH = "width"
+            const val HEIGHT = "height"
 
             const val ABS = "abs"
             const val ACOS = "acos"

@@ -57,4 +57,10 @@
     <string name="button_clear_data">Clear</string>
     <string name="label_warning">Warning</string>
     <string name="text_clear_data_dialog">Clear data. is this good?</string>
+    <string name="name_library">Library</string>
+    <string name="name_submit">Submit</string>
+    <string name="name_delete">Delete</string>
+    <string name="name_store">Store</string>
+    <string name="text_delete_image">"Are you sure you want to delete "</string>
+    <string name="text_input_name">Please name it</string>
 </resources>

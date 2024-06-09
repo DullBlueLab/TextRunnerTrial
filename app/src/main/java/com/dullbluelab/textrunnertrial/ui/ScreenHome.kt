@@ -31,6 +31,7 @@ import com.dullbluelab.textrunnertrial.R
 fun ScreenHome(
     onExecuteButtonClicked: () -> Unit,
     onClearButtonClicked: () -> Unit,
+    onLinkGuideClicked: () -> Unit,
     launchLoadText: () -> Unit,
     viewModel: RunnerViewModel,
     modifier: Modifier = Modifier
@@ -96,5 +97,17 @@ fun ScreenHome(
                 Text(text = stringResource(id = R.string.clear_button))
             }
         }
+    }
+    if (uiState.flagGuideDialog) {
+        GuideDialog(
+            onBrowse = {
+                viewModel.updateGuideDialog(false)
+                viewModel.saveGuideDialog(false)
+                onLinkGuideClicked()
+            },
+            onCancel = {
+                viewModel.updateGuideDialog(false)
+            }
+        )
     }
 }

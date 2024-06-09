@@ -1,14 +1,24 @@
 package com.dullbluelab.textrunnertrial.action
 
 import com.dullbluelab.textrunnertrial.Errors
-import com.dullbluelab.textrunnertrial.logic.CodeBlock
+import com.dullbluelab.textrunnertrial.block.BlockArgumentList
+import com.dullbluelab.textrunnertrial.block.BlockClassDef
+import com.dullbluelab.textrunnertrial.block.BlockConstDef
+import com.dullbluelab.textrunnertrial.block.BlockFunDef
+import com.dullbluelab.textrunnertrial.block.BlockListValue
+import com.dullbluelab.textrunnertrial.block.BlockNumber
+import com.dullbluelab.textrunnertrial.block.BlockStrings
+import com.dullbluelab.textrunnertrial.block.CodeBlock
+import com.dullbluelab.textrunnertrial.data.LibraryRepository
 import com.dullbluelab.textrunnertrial.logic.References
 import com.dullbluelab.textrunnertrial.logic.Syntax
+import com.dullbluelab.textrunnertrial.objects.*
 
-class Spaces {
+class Spaces(repositories: LibraryRepository) {
+
     private val groundVarList: VarLists = VarLists()
-    private var thisObject: Objects.Instances? = null
-    private val thisObjectStack: MutableList<Objects.Instances?> = mutableListOf()
+    private var thisObject: RunInstance? = null
+    private val thisObjectStack: MutableList<RunInstance?> = mutableListOf()
     private var thisVarList: VarLists? = null
     private val thisVarStack: MutableList<VarLists> = mutableListOf()
 
@@ -18,10 +28,10 @@ class Spaces {
     var groundFlag: Boolean = false
 
     class Returns {
-        private var objects: Objects.Common? = null
+        private var objects: RunObject? = null
 
         fun objects() = objects
-        fun set(objects: Objects.Common?) { this.objects = objects }
+        fun set(objects: RunObject?) { this.objects = objects }
         fun isReturn() = (objects != null)
         fun clear() { objects = null }
     }
@@ -46,8 +56,8 @@ class Spaces {
         referenceStack.clear()
     }
 
-    fun getValue(word: String): Objects.Common? {
-        var sets: Objects.Common? = null
+    fun getValue(word: String): RunObject? {
+        var sets: RunObject? = null
 
         thisVarList?.let { sets = it.search(word)?.value() }
 
@@ -60,7 +70,7 @@ class Spaces {
         return sets
     }
 
-    fun updateThisObject(instances: Objects.Instances) {
+    fun updateThisObject(instances: RunInstance) {
         thisObjectStack.add(thisObject)
         thisObject = instances
 
@@ -87,12 +97,12 @@ class Spaces {
         }
     }
 
-    fun updateFunVar(funDef: CodeBlock.FunDef, arguments: MutableList<Objects.Common>): String {
+    fun updateFunVar(funDef: BlockFunDef, arguments: MutableList<RunObject>): String {
         var result = ""
         thisVarList?.let { thisVarStack.add(it) }
         thisVarList = VarLists()
 
-        val argList: CodeBlock.ArgumentList? = funDef.arguments()
+        val argList: BlockArgumentList? = funDef.arguments()
         if (argList != null && argList.size() > 0) {
             result = thisVarList?.setArguments(argList, arguments)
                 ?: throw Errors.Syntax(Errors.Key.INTERNAL, "updateFunVar")
@@ -111,7 +121,7 @@ class Spaces {
         }
     }
 
-    fun createVarObject(name: String, className: Names, isMember: Boolean): Objects.Common {
+    fun createVarObject(name: String, className: Names, isMember: Boolean): RunObject {
         return if (referenceList != null) {
             if (isMember)
                 thisObject?.members()?.appendVarObjects(name, className, referenceList!!)
@@ -123,7 +133,7 @@ class Spaces {
         else throw Errors.Logic("Spaces.createVarObject")
     }
 
-    fun createConst(constDef: CodeBlock.ConstDef, isMember: Boolean): Objects.Common {
+    fun createConst(constDef: BlockConstDef, isMember: Boolean): RunObject {
         return if (isMember) {
             if (referenceList != null)
                 thisObject?.members()?.appendConstValue(constDef)
@@ -135,16 +145,16 @@ class Spaces {
                 ?: throw Errors.Logic("Spaces.createConst")
     }
 
-    fun findClassDef(name: String): CodeBlock.Common? {
+    fun findClassDef(name: String): CodeBlock? {
         val set = referenceList?.search(References.Type.CLASS, name)
         return set?.codes()
     }
 
     data class VarSets(
         private val name: String,
-        private val type: Objects.Type?,
+        private val type: RunObject.Type?,
         private val classes: Names?,
-        private var value: Objects.Common? = null
+        private var value: RunObject? = null
     ) {
         fun name() = name
         fun value() = value
@@ -154,72 +164,75 @@ class Spaces {
         private val lists: MutableList<VarSets> = mutableListOf()
 
         fun appendVarObjects(name: String, className: Names, refList:References.Lists)
-            : Objects.Common? {
+            : RunObject? {
 
-            var objects: Objects.Common? = null
+            var objects: RunObject? = null
             val type = getVarType(className)
 
-            if (type == Objects.Type.INSTANCE) {
+            if (type == RunObject.Type.INSTANCE) {
                 val classDef = refList.searchIntoTrees(References.Type.CLASS, className)?.codes()
                 if (classDef != null && classDef.type() == CodeBlock.Type.CLASS_DEF)
-                    objects = Objects.Instances((classDef as CodeBlock.ClassDef))
+                    objects = RunInstance((classDef as BlockClassDef))
             }
-            else if (type == Objects.Type.LISTS) {
-                objects = Objects.Lists()
+            else if (type == RunObject.Type.LISTS) {
+                objects = RunList()
             }
-            else if (Objects.isValue(type)) {
+            else if (type == RunObject.Type.IMAGES) {
+                objects = RunImage()
+            }
+            else if (RunObject.isValue(type)) {
                 objects = createValueObject(type)
             }
             lists.add(VarSets(name, type, className, objects))
             return objects
         }
 
-        private fun getVarType(returns: Names): Objects.Type {
+        private fun getVarType(returns: Names): RunObject.Type {
             return if (returns.size() == 1)
-                Objects.typeValue(returns.text()) ?: Objects.Type.INSTANCE
-            else Objects.Type.INSTANCE // here
+                RunObject.typeValue(returns.text()) ?: RunObject.Type.INSTANCE
+            else RunObject.Type.INSTANCE // here
         }
 
-        private fun createValueObject(type: Objects.Type): Objects.Values? {
-            val result: Objects.Values? =
+        private fun createValueObject(type: RunObject.Type): RunValue? {
+            val result: RunValue? =
                 when (type) {
-                    Objects.Type.INTS     -> Objects.Ints()
-                    Objects.Type.DOUBLES  -> Objects.Doubles()
-                    Objects.Type.STRINGS  -> Objects.Strings()
-                    Objects.Type.BOOLEANS -> Objects.Booleans()
+                    RunObject.Type.INTS     -> RunInt()
+                    RunObject.Type.DOUBLES  -> RunDouble()
+                    RunObject.Type.STRINGS  -> RunString()
+                    RunObject.Type.BOOLEANS -> RunBoolean()
                     else -> null
                 }
             return result
         }
 
-        fun appendConstValue(codes: CodeBlock.ConstDef): Objects.Common {
-            var result: Objects.Common? = null
+        fun appendConstValue(codes: BlockConstDef): RunObject {
+            var result: RunObject? = null
             val block = codes.value() ?: throw Errors.Logic("appendConstValue")
             val name = codes.name()
 
             when (block.type()) {
                 CodeBlock.Type.STRING -> {
-                    result = Objects.Strings(block as CodeBlock.Strings)
+                    result = RunString(block as BlockStrings)
                 }
                 CodeBlock.Type.NUMBER -> {
-                    val strings = (block as CodeBlock.Number).strings()
+                    val strings = (block as BlockNumber).strings()
                     result = if (strings.contains(Syntax.Chars.DOT))
-                        Objects.Doubles(strings.toDouble())
+                        RunDouble(strings.toDouble())
                     else
-                        Objects.Ints(strings.toInt())
+                        RunInt(strings.toInt())
                 }
                 CodeBlock.Type.LIST -> {
-                    val objects = (block as CodeBlock.ListValue).objects()
-                    objects?.let { result = Objects.Lists(it) }
+                    val objects = (block as BlockListValue).objects()
+                    objects?.let { result = RunList(it) }
                 }
                 else -> throw Errors.Syntax(Errors.Key.UNKNOWN_CONST)
             }
-            result?.let { lists.add(VarSets(name, it.type(), classes = null, it)) }
+            result?.let { lists.add(VarSets(name, it.type, classes = null, it)) }
             return result ?: throw Errors.Syntax(Errors.Key.UNKNOWN_CONST)
         }
 
         fun setArguments(
-            argCodes: CodeBlock.ArgumentList, argValues: MutableList<Objects.Common> ): String{
+            argCodes: BlockArgumentList, argValues: MutableList<RunObject> ): String{
 
             if (argCodes.size() != argValues.size) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT)
 
@@ -231,10 +244,10 @@ class Spaces {
                 val codeClassName = Names(codeDef.className())
 
                 val value = argValues[index]
-                val valueType = value.type()
+                val valueType = value.type
                 val valueClassName =
-                    if (valueType == Objects.Type.INSTANCE)
-                            (value as Objects.Instances).classNames()
+                    if (valueType == RunObject.Type.INSTANCE)
+                            (value as RunInstance).classNames()
                     else null
 
                 if (!value.matchType(codeClassName)) throw Errors.Syntax(Errors.Key.NOT_MATCH_ARGUMENT)
@@ -269,11 +282,11 @@ class Spaces {
             words.add(name)
         }
 
-        constructor(blocks: CodeBlock.Common?) : this() {
+        constructor(blocks: CodeBlock?) : this() {
             make(blocks)
         }
 
-        constructor(space: Names, block: CodeBlock.Common?) : this() {
+        constructor(space: Names, block: CodeBlock?) : this() {
             words.addAll(space.words)
             make(block)
         }
@@ -286,7 +299,7 @@ class Spaces {
             words.add(name)
         }
 
-        private fun make(blocks: CodeBlock.Common?) {
+        private fun make(blocks: CodeBlock?) {
             if (blocks?.type() == CodeBlock.Type.WORD) {
                 words.add(blocks.name())
             }

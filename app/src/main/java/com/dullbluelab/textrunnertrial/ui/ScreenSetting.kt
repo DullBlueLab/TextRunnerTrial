@@ -156,5 +156,16 @@ fun ScreenSetting(
                 text = stringResource(id = R.string.button_clear_data)
             )
         }
+        if (uiState.flagClearDataDialog) {
+            ClearDataDialog(
+                onClear = {
+                    viewModel.requestClearDataDialog(false)
+                    viewModel.clearAllData()
+                },
+                onCancel = {
+                    viewModel.requestClearDataDialog(false)
+                }
+            )
+        }
     }
 }
