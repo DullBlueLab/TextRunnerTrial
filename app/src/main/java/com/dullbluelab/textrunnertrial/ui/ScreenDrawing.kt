@@ -7,12 +7,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.dullbluelab.textrunnertrial.RunnerScreen
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
 import com.dullbluelab.textrunnertrial.RunnerViewModel
-import com.dullbluelab.textrunnertrial.action.Drawing
+import com.dullbluelab.textrunnertrial.action.drawing.Drawing
 
 @Composable
 fun ScreenDrawing(
@@ -20,6 +19,7 @@ fun ScreenDrawing(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val status = viewModel.status()
+    val textMeasurer = rememberTextMeasurer()
 
     Canvas(modifier = Modifier
         .fillMaxSize()
@@ -37,7 +37,7 @@ fun ScreenDrawing(
             if (viewModel.enableAction()) viewModel.canvasChanged()
         }
 
-        uiState.drawingQueue.list().forEach() { item ->
+        uiState.drawingQueue.list().forEach { item ->
             when (item.type()) {
                 Drawing.Type.ARC -> {
                     val i = item as Drawing.Arc
@@ -64,6 +64,11 @@ fun ScreenDrawing(
                 Drawing.Type.RECT -> {
                     val i = item as Drawing.Rect
                     drawRect( i.color, i.topLeft, i.size, i.alpha )
+                }
+                Drawing.Type.TEXT -> {
+                    val i = item as Drawing.Text
+                    val measure = textMeasurer.measure( i.text, i.textStyle )
+                    drawText( measure, i.color, i.leftTop )
                 }
             }
         }

@@ -83,6 +83,8 @@ private fun LibraryCard(
     onClick: (DirectoryTable) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val sizeText = "${item.width} x ${item.height}"
+
     Card(
         modifier = modifier.padding(4.dp).clickable { onClick(item.directory) },
         colors = CardDefaults.cardColors(
@@ -99,10 +101,18 @@ private fun LibraryCard(
                 contentDescription = "image",
                 modifier = Modifier.size(100.dp)
             )
-            Text(
-                text = item.directory.name,
+            Column(
                 modifier = Modifier.weight(1f).padding(16.dp, 8.dp)
-            )
+            ) {
+                Text(
+                    text = item.directory.name,
+                    modifier = Modifier
+                )
+                Text(
+                    text = sizeText,
+                    modifier = Modifier
+                )
+            }
         }
     }
 }

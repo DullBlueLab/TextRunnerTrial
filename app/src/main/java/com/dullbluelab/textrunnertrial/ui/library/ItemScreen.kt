@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -48,6 +49,7 @@ fun ItemScreen(
             modifier = Modifier
                 .height(80.dp)
                 .fillMaxWidth()
+                .padding(16.dp)
         ) {
             Text(text = "name : ")
             TextField(
@@ -88,7 +90,7 @@ fun ItemScreen(
                 "edit" -> {
                     Button(onClick = {
                         if (itemUi.rename.isEmpty()) {
-                            Toast.makeText(context, textInputName, Toast.LENGTH_SHORT).show()
+                            viewModel.showNoNameDialog(true)
                         } else {
                             viewModel.renameItem()
                             done()
@@ -128,6 +130,16 @@ fun ItemScreen(
             },
             cancel = {
                 viewModel.showDeleteDialog(false)
+            }
+        )
+    }
+    if (itemUi.noNameDialogFlag) {
+        NoNameAlert(
+            cancel = {
+                viewModel.showNoNameDialog(false)
+            },
+            confirm = {
+                viewModel.showNoNameDialog(false)
             }
         )
     }

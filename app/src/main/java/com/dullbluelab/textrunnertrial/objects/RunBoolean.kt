@@ -5,7 +5,7 @@ import com.dullbluelab.textrunnertrial.block.BlockWord
 import com.dullbluelab.textrunnertrial.logic.Syntax
 
 private val RW = Syntax.Reserved.Word
-private val MW = Syntax.Method.Word
+//private val MW = Syntax.Method.Word
 
 class RunBoolean() : RunValue(Type.BOOLEANS) {
 

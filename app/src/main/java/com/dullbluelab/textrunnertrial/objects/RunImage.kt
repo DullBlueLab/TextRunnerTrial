@@ -52,12 +52,12 @@ class RunImage : RunObject(Type.IMAGES) {
         else if (arguments.size == 4 &&
             arguments[0].isRunValue() && arguments[1].isRunValue() &&
             arguments[2].isRunValue() && arguments[3].isRunValue()) {
-            val top = arguments[0] as RunValue
-            val left = arguments[1] as RunValue
-            val bottom = arguments[2] as RunValue
-            val right = arguments[3] as RunValue
+            val left = arguments[0] as RunValue
+            val top = arguments[1] as RunValue
+            val right = arguments[2] as RunValue
+            val bottom = arguments[3] as RunValue
             result = when (method) {
-                MW.CROP -> crop(top, left, bottom, right)
+                MW.CROP -> crop(left, top, right, bottom)
                 else -> null
             }
         }
@@ -71,7 +71,7 @@ class RunImage : RunObject(Type.IMAGES) {
         return this
     }
 
-    fun isLoaded(): RunObject {
+    private fun isLoaded(): RunObject {
         return RunBoolean(loadedFlag)
     }
 
@@ -93,7 +93,7 @@ class RunImage : RunObject(Type.IMAGES) {
         }
     }
 
-    private fun crop(top: RunValue, left: RunValue, bottom: RunValue, right: RunValue): RunObject? {
+    private fun crop(left: RunValue, top: RunValue, right: RunValue, bottom: RunValue): RunObject? {
         if (bitmap == null) return null
         cropOffset = IntOffset(left.valueInt(), top.valueInt())
         cropSize = IntSize(right.valueInt() - left.valueInt(),

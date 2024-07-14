@@ -16,6 +16,8 @@ data class DirectoryTable(
     val name: String,
     val path: String,
     val type: String,
+    val width: Int,
+    val height: Int,
     val thumbnail: String
 )
 

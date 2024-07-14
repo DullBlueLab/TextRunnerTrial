@@ -1,4 +1,4 @@
-package com.dullbluelab.textrunnertrial.action
+package com.dullbluelab.textrunnertrial.action.drawing
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -11,13 +11,14 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.PointMode
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 
 class Drawing {
 
     enum class Type {
-        ARC, CIRCLE, IMAGES, LINE, POINTS, RECT,
+        ARC, CIRCLE, IMAGES, LINE, POINTS, RECT, TEXT
     }
 
     open class Item(
@@ -94,6 +95,15 @@ class Drawing {
 
     }
 
+    class Text(
+        var text: String,
+        var color: Color,
+        var textStyle: TextStyle,
+        var leftTop: Offset
+    ) : Item(Type.TEXT) {
+
+    }
+
     data class Option(
         var color: Color,
         var strokeWidth: Float,
@@ -126,8 +136,14 @@ class Drawing {
         fun drawImage(image: ImageBitmap,
                       srcOffset: IntOffset, srcSize: IntSize,
                       dstOffset: IntOffset, dstSize: IntSize,
-                      option: Option) {
+                      option: Option
+        ) {
             val item = Images(image, srcOffset, srcSize, dstOffset, dstSize, option.alpha)
+            list.add(item)
+        }
+
+        fun drawText(text: String, color: Color, textStyle: TextStyle, leftTop: Offset) {
+            val item = Text(text, color, textStyle, leftTop)
             list.add(item)
         }
 

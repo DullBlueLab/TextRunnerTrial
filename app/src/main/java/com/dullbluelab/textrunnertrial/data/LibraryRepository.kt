@@ -29,7 +29,7 @@ class LibraryRepository(
     }
 
     suspend fun appendImage(name: String, bitmap: Bitmap) {
-        val table = makeDirectoryTable(name)
+        val table = makeDirectoryTable(name, bitmap)
         imageLibrary.store(table, bitmap)
         withContext(Dispatchers.Default) { insertDirectoryTable(table) }
     }
@@ -43,10 +43,12 @@ class LibraryRepository(
         withContext(Dispatchers.Default) { deleteDirectoryTable(table) }
     }
 
-    private fun makeDirectoryTable(name: String): DirectoryTable {
+    private fun makeDirectoryTable(name: String, bitmap: Bitmap): DirectoryTable {
         val path = "$name.png"
+        val width = bitmap.width
+        val height = bitmap.height
         val thumbnail = "$name-thum.png"
-        return DirectoryTable(0, name, path, "PNG", thumbnail)
+        return DirectoryTable(0, name, path, "PNG", width, height, thumbnail)
     }
 
     suspend fun renameImage(directory: DirectoryTable, newName: String) {

@@ -30,7 +30,7 @@ class RunInt() : RunValue(Type.INTS) {
     override fun checkLevel(dst: RunValue): RunValue =
         if (dst.type == Type.DOUBLES) RunDouble(value.toDouble()) else this
 
-    override fun execute(method: String, arguments: MutableList<RunObject>) : RunObject? {
+    override fun execute(method: String, arguments: MutableList<RunObject>) : RunObject {
         var result: RunObject? = super.execute(method, arguments)
         if (result != null) return result
 

@@ -5,7 +5,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dullbluelab.textrunnertrial.action.Drawing
+import com.dullbluelab.textrunnertrial.action.drawing.Drawing
 import com.dullbluelab.textrunnertrial.action.Runner
 import com.dullbluelab.textrunnertrial.data.LibraryRepository
 import com.dullbluelab.textrunnertrial.data.SettingItem

@@ -654,7 +654,8 @@ class Runner(
 
     private fun setTimerTask(count: Long) {
         timer = Timer()
-        timer!!.scheduleAtFixedRate( RunnerTimerTask(this), count, count)
+        //timer!!.scheduleAtFixedRate( RunnerTimerTask(this), count, count)
+        timer?.schedule(RunnerTimerTask(this), count)
     }
 
     private class RunnerTimerTask(val parent: Runner): TimerTask() {

@@ -15,6 +15,8 @@ class ImageLibrary(
     class Table(
         var directory: DirectoryTable,
         var thumbnailBitmap: Bitmap,
+        var width: Int = 0,
+        var height: Int = 0,
         var importFlag: Boolean = false,
         var bitmap: Bitmap? = null
     ) {
@@ -26,7 +28,7 @@ class ImageLibrary(
     private suspend fun load(directory: DirectoryTable): Table {
         val table: Table
         val bitmap = imageFiles.load(directory.thumbnail)
-        table = Table(directory, bitmap)
+        table = Table(directory, bitmap, directory.width, directory.height)
         return table
     }
 
@@ -42,7 +44,7 @@ class ImageLibrary(
         val thumbnailBitmap = makeThumbnail(bitmap)
         imageFiles.store(directory.path, bitmap)
         imageFiles.store(directory.thumbnail, thumbnailBitmap)
-        val table = Table(directory, thumbnailBitmap)
+        val table = Table(directory, thumbnailBitmap, bitmap.width, bitmap.height)
         list.add(table)
     }
 

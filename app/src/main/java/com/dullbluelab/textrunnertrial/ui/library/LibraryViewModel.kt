@@ -37,7 +37,8 @@ class LibraryViewModel(
         val rename: String = "",
         val loadedUri: Uri? = null,
         val progressFlag: Boolean = false,
-        val deleteDialogFlag: Boolean = false
+        val deleteDialogFlag: Boolean = false,
+        val noNameDialogFlag: Boolean = false
     )
     private val _itemUi = MutableStateFlow(ItemUiState())
     val itemUi: StateFlow<ItemUiState> = _itemUi.asStateFlow()
@@ -134,6 +135,14 @@ class LibraryViewModel(
         _itemUi.update { state ->
             state.copy(
                 deleteDialogFlag = flag
+            )
+        }
+    }
+
+    fun showNoNameDialog(flag: Boolean) {
+        _itemUi.update { state ->
+            state.copy(
+                noNameDialogFlag = flag
             )
         }
     }

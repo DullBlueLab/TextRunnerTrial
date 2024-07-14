@@ -1,6 +1,5 @@
 package com.dullbluelab.textrunnertrial.action
 
-import android.graphics.Bitmap
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -12,6 +11,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import com.dullbluelab.textrunnertrial.Errors
 import com.dullbluelab.textrunnertrial.RunnerViewModel
+import com.dullbluelab.textrunnertrial.action.drawing.Drawing
+import com.dullbluelab.textrunnertrial.action.drawing.TextSetting
 import com.dullbluelab.textrunnertrial.logic.Syntax
 import com.dullbluelab.textrunnertrial.objects.*
 import java.lang.Math.random
@@ -28,6 +29,8 @@ class Machine(
         pathEffect = null,
         alpha = 1f
     )
+
+    private val currentTextSet: TextSetting = TextSetting()
 
     private val status = vm.status()
     private val voids = RunVoid()
@@ -48,6 +51,7 @@ class Machine(
             MW.DRAW_LINE -> drawLine(args)
             MW.DRAW_RECT -> drawRect(args)
             MW.DRAW_IMAGE -> drawImage(args)
+            MW.DRAW_TEXT -> drawText(args)
             MW.FILL_CANVAS -> fillCanvas(args)
 
             MW.DRAW_UP -> drawUp()
@@ -55,6 +59,7 @@ class Machine(
             MW.CHANGE_COLOR -> changeColor(args)
             MW.CHANGE_STROKE -> changeStroke(args)
             MW.CHANGE_ALPHA -> changeAlpha(args)
+            MW.SET_TEXT_STYLE -> setTextStyle(args)
 
             MW.RANDOM -> getRandom(args)
             MW.PI -> RunDouble(Math.PI)
@@ -158,9 +163,9 @@ class Machine(
             cropOffset = images.cropOffset
             cropSize = images.cropSize
         }
-        val top = if (args[1].isRunValue())
+        val left = if (args[1].isRunValue())
             (args[1] as RunValue).valueInt() else null
-        val left = if (args[2].isRunValue())
+        val top = if (args[2].isRunValue())
             (args[2] as RunValue).valueInt() else null
         val width = if (args[3].isRunValue())
             (args[3] as RunValue).valueInt() else null
@@ -173,6 +178,24 @@ class Machine(
         val leftTop = IntOffset(left, top)
         val size = IntSize(width, height)
         drawingQueue.drawImage(bitmap, cropOffset!!, cropSize!!, leftTop, size, currents)
+        return voids
+    }
+
+    private fun drawText(args: MutableList<RunObject>) : RunObject {
+        if (args.size != 3) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.DRAW_TEXT)
+
+        val text = if (args[0].isRunValue())
+            (args[0] as RunValue).valueString() else null
+        val left = if (args[0].isRunValue())
+            (args[1] as RunValue).valueDouble().toFloat() else null
+        val top = if (args[1].isRunValue())
+            (args[2] as RunValue).valueDouble().toFloat() else null
+
+        if (text == null || left == null || top == null)
+            throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.DRAW_TEXT)
+
+        val offset = Offset(left, top)
+        drawingQueue.drawText(text, currents.color, currentTextSet.buildStyle(), offset)
         return voids
     }
 
@@ -245,6 +268,27 @@ class Machine(
         if (alpha == null) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.CHANGE_ALPHA)
 
         currents.alpha = alpha
+        return voids
+    }
+
+    private fun setTextStyle(args: MutableList<RunObject>) : RunObject {
+        if (args.size != 5) throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.SET_TEXT_STYLE)
+
+        val size = if (args[0].isRunValue())
+            (args[0] as RunValue).valueInt() else null
+        val weight = if (args[1].isRunValue())
+            (args[1] as RunValue).valueInt() else null
+        val style = if (args[2].isRunValue())
+            (args[2] as RunValue).valueString() else null
+        val family = if (args[3].isRunValue())
+            (args[3] as RunValue).valueString() else null
+        val decoration = if (args[4].isRunValue())
+            (args[4] as RunValue).valueString() else null
+
+        if (size == null || weight == null || style == null || family == null || decoration == null)
+            throw Errors.Syntax(Errors.Key.ILLEGAL_ARGUMENT, MW.SET_TEXT_STYLE)
+
+        currentTextSet.setStyle(size, weight, style, family, decoration)
         return voids
     }
 
