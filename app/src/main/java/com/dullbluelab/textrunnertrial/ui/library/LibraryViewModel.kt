@@ -6,13 +6,11 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dullbluelab.textrunnertrial.RunnerViewModel
 import com.dullbluelab.textrunnertrial.data.DirectoryTable
 import com.dullbluelab.textrunnertrial.data.ImageFiles
 import com.dullbluelab.textrunnertrial.data.ImageLibrary
 import com.dullbluelab.textrunnertrial.data.LibraryRepository
 import com.dullbluelab.textrunnertrial.data.UserPreferencesRepository
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,9 +18,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 private const val TAG = "LibraryViewModel"
-private const val THUMBNAIL_LENGTH = 480
-private const val THUMBNAIL_LABEL = "_thum"
-private const val IMAGE_FILE_IDENTIFIER = ".png"
+//private const val THUMBNAIL_LENGTH = 480
+//private const val THUMBNAIL_LABEL = "_thum"
+//private const val IMAGE_FILE_IDENTIFIER = ".png"
 
 class LibraryViewModel(
     private val preferences: UserPreferencesRepository,

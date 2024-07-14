@@ -6,10 +6,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 private const val THUMBNAIL_SIZE = 240
-private const val ERROR_NOT_FILE_OPEN = "Not file open : LibraryImeges.appendImage"
+//private const val ERROR_NOT_FILE_OPEN = "Not file open : LibraryImeges.appendImage"
 
 class ImageLibrary(
-    private val context: Context
+    context: Context
 ) {
     val list: MutableList<Table> = mutableListOf()
     class Table(
@@ -17,8 +17,8 @@ class ImageLibrary(
         var thumbnailBitmap: Bitmap,
         var width: Int = 0,
         var height: Int = 0,
-        var importFlag: Boolean = false,
-        var bitmap: Bitmap? = null
+        //var importFlag: Boolean = false,
+        //var bitmap: Bitmap? = null
     ) {
         var name: String = directory.name
     }

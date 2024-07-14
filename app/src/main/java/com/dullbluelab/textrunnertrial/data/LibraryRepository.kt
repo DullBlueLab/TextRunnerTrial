@@ -9,13 +9,13 @@ import kotlinx.coroutines.withContext
 class LibraryRepository(
     private val directoryDao: DirectoryDao,
     private val database: LibraryDatabase,
-    private val context: Context
+    context: Context
 ) {
     private suspend fun insertDirectoryTable(table: DirectoryTable) = directoryDao.insert(table)
     private suspend fun deleteDirectoryTable(table: DirectoryTable) = directoryDao.delete(table)
     private suspend fun updateDirectoryTable(table: DirectoryTable) = directoryDao.update(table)
-    suspend fun deleteDirectoryAll() = directoryDao.deleteAll()
-    fun getDirectoryItem(name: String): Flow<DirectoryTable> = directoryDao.getTable(name)
+//    suspend fun deleteDirectoryAll() = directoryDao.deleteAll()
+//    fun getDirectoryItem(name: String): Flow<DirectoryTable> = directoryDao.getTable(name)
     private fun getDirectoryAll(): Flow<List<DirectoryTable>> = directoryDao.getAll()
 
     private val imageLibrary: ImageLibrary = ImageLibrary(context)
