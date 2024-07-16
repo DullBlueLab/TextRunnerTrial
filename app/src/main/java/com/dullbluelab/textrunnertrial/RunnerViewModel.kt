@@ -219,13 +219,14 @@ class RunnerViewModel(
         }
     }
 
-    fun updateGuideDialog(flag: Boolean) {
+/*    fun updateGuideDialog(flag: Boolean) {
         _uiState.update { state ->
             state.copy(
                 flagGuideDialog = flag
             )
         }
     }
+*/
 
     fun requestClearDataDialog(flag: Boolean) {
         _uiState.update { state ->
@@ -296,11 +297,11 @@ class RunnerViewModel(
         }
     }
 
-    fun saveGuideDialog(flag: Boolean) {
+    /* fun saveGuideDialog(flag: Boolean) {
         viewModelScope.launch {
             preferences.saveGuideDialog(flag)
         }
-    }
+    } */
 
     fun settingSafetyCheck(key: String, text: String): Boolean =
         if (text.isDigitsOnly() && text.isNotEmpty()) preferences.safetyCheck(key, text.toInt())

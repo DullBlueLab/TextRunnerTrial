@@ -67,8 +67,9 @@ fun TextRunnerApp(
                     navController.navigateUp()
                 },
                 onGuideButtonClicked = {
-                    if (setting.flagGuideDialog) viewModel.updateGuideDialog(true)
-                    else onLinkGuideClicked()
+                    //if (setting.flagGuideDialog) viewModel.updateGuideDialog(true)
+                    //else onLinkGuideClicked()
+                    onLinkGuideClicked()
                 },
                 onLibraryButtonClicked = {
                     navController.navigate(RunnerScreen.Library.name)

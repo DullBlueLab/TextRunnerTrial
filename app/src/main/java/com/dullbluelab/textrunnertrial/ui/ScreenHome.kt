@@ -98,7 +98,7 @@ fun ScreenHome(
             }
         }
     }
-    if (uiState.flagGuideDialog) {
+/*    if (uiState.flagGuideDialog) {
         GuideDialog(
             onBrowse = {
                 viewModel.updateGuideDialog(false)
@@ -110,4 +110,5 @@ fun ScreenHome(
             }
         )
     }
+*/
 }
