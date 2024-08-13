@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width" />
+<title>Cormoo guidance</title>
+<link rel="stylesheet" href="styles.css" />
+
+</head>
+
+
+
+<body>
+
+<nav>
+
+<ul class="topbar">
+<li><a href="#startup">startup</a></li>
+<li><a href="#guide">guide</a></li>
+<li><a href="#info">info</a></li>
+<li><a href="#top">top</a></li>
+</ul>
+
+</nav>
+
+
+
+<header id="top">
+
+<h1>Cormoo guidance</h1>
+
+<p>Cormoo は、android にてインタプリタで動作するシンプルでコンパクトな言語です。
+パソコン黎明期の BASIC のように、軽量で取り組みやすい言語を目指し、
+主にプログラミング教育などの用途に活用していただければと思います。 </p>
+
+<p>Cormoo は、Kotlin でプログラムを組んでいます。文法も Kotlin を参考にして組みました。
+Kotlin ほど強力な言語ではなく軽量なアプリになるように、簡素な解文能力とコンパクトな実行環境で構成しています。
+プログラムの記述は他のエディタアプリに任せて、入力部は簡素にして主にプログラムの実行部分を実現しています。</p>
+
+<h2>Samples & Tutorials</h2>
+<h3><a href="sample_tutorial.html" alt="go to Sample page">サンプル１・落ちるボール</a></h3>
+<p>サンプルページ始めました。サンプルプログラムを通じてプログラミングを解説いたします。</p>
+</header>
+
+
+
+<article>
+
+<section id="startup">
+
+<h2>プログラミングを始めてみる</h2>
+
+<h3>Hello World! プログラム</h3>
+<p>ホーム画面の上半分はテキストの入力部です。
+直接入力しても良いですが保存機能も無いため、他のテキストエディタでタイプしたファイルを、Load ボタンでテキストの入力部に読み込むことが出来ます。</p>
+<code><pre>
+$m.print("Hello World!")
+</pre></code>
+<p>先ずは上記のコードを入力部に記述または読み込み、Run ボタンで実行します。
+画面はキャンバス画面に移動しますが、ホーム画面に戻ると入力部の下にメッセージが出力されています。
+ホーム画面の下側は、テキストの出力やエラーメッセージなどの表示部分です。
+プログラムの主要な実行機能は、 $m オブジェクトにて構成しています。</p>
+
+<h3>タイマー処理</h3>
+<p>描画コマンドとタイマーを使用して、キャンバスにラインを描いてみましょう。
+次のプログラムをダウンロードして、読み込み、実行してみてください。</p>
+<p><a href="resource/sample-3-1.txt" download="sample-3-1.txt">sample-3-1.txt</a></p>
+<code><pre>
+class Main {
+  fun run() {
+    $m.setStroke(10.0)
+    $m.setTimer(500)
+  }
+  fun timer(iv: Int) {
+    var x1, y1, x2, y2 : Double
+    x1 = $m.random($m.canvasWidth())
+    y1 = $m.random($m.canvasHeight())
+    x2 = $m.random($m.canvasWidth())
+    y2 = $m.random($m.canvasHeight())
+    $m.drawLine(x1, y1, x2, y2)
+    $m.drawUp()
+  }
+}
+</pre></code>
+<p>メインの実行画面は、このキャンバスにて行われます。
+タイマー機能により、間隔次第ではアニメーションのような効果も実現できます。</p>
+
+<h3>タップ処理</h3>
+<p>現状では、アクションについてタップ処理に対応しています。
+次のプログラムでは、モグラたたきの原始的な構成の動きをします。</p>
+<p><a href="resource/sample-2-4.txt" download="sample-2-4.txt">sample-2-4.txt</a></p>
+<code><pre>
+const MinSize = 100
+const CircleSize = 100
+const TimerCycle = 1000
+
+class CircleItem {
+  var r, g, b, rd, x, y : Double
+
+  init() {
+    var w, h : Double
+    r = $m.random(1)
+    g = $m.random(1)
+    b = $m.random(1)
+    rd = $m.random(CircleSize) + MinSize
+    w = $m.random($m.canvasWidth())
+    h = $m.random($m.canvasHeight())
+    if ($m.canvasWidth() >= $m.canvasHeight()) {
+      x = w
+      y = h
+    }
+    else {
+      y = w
+      x = h
+    }
+  }
+
+  fun draw() {
+    $m.setColor(r, g, b)
+    if ($m.canvasWidth() >= $m.canvasHeight()) {
+      $m.drawCircle(rd, x, y)
+    }
+    else {
+      $m.drawCircle(rd, y, x)
+    }
+  }
+
+  fun hit(tx: Double, ty: Double) : Boolean {
+    var flag : Boolean
+    var sx, sy, sh : Double
+    if ($m.canvasWidth() >= $m.canvasHeight()) {
+      sx = (x - tx).abs()
+      sy = (y - ty).abs()
+      sh = (sx * sx + sy * sy).sqrt()
+    }
+    else {
+      sx = (x - ty).abs()
+      sy = (y - tx).abs()
+      sh = (sx * sx + sy * sy).sqrt()
+    }
+    if (sh < rd) flag = true else flag = false
+    return (flag)
+  }
+}
+
+class CircleList {
+  var list : List
+
+  fun appendItem() {
+    var item : CircleItem()
+    list += item
+  }
+
+  fun draw() {
+    var cnt : Int
+    cnt = 0
+    while (cnt < list.size()) {
+      list[cnt].draw()
+      cnt ++
+    }
+    $m.drawUp()
+  }
+
+  fun hit(tx: Double, ty: Double) : Int {
+    var cnt, score : Int
+    score = 0
+    cnt = 0
+    while (cnt < list.size()) {
+      if (list[cnt].hit(tx, ty)) {
+        list.removeAt(cnt)
+        score ++
+      }
+      cnt ++
+    }
+    return (score)
+  }
+}
+
+class Main {
+  var circleList : CircleList
+  var score : Int
+
+  fun run() {
+    $m.setTimer(TimerCycle)
+    $m.tapAction(true)
+  }
+
+  fun timer(iv: Int) {
+    circleList.appendItem()
+    circleList.draw()
+  }
+
+  fun onTap(x: Double, y: Double) {
+    var s : Int
+    s = circleList.hit(x, y)
+    if (s > 0) {
+      score += s
+      circleList.draw()
+    }
+  }
+}
+</pre></code>
+
+<p>このように Cormoo は、キャンバスへの描画を中心とした、プログラミングを習得するのにも遊び感覚で出来る、身近な android で動作するプログラミングアプリです。
+描画コマンドはまだ少ないですが、これからの機能アップに期待してください。</p>
+
+</section>
+
+
+
+<section id="guide">
+
+<h2>ガイド</h2>
+
+<h3>データ型</h3>
+<p>現状のデータ型は、Int、Double、String、Boolean、List になります。
+変数宣言の時にはそれぞれ初期値が代入され、null の無い構成になります。</p>
+
+<h4>Int</h4>
+<p>32bit の整数です、初期値は 0 です。</p>
+<code><pre>
+x = 123 + 45
+</pre></code>
+
+<h4>Double</h4>
+<p>64bit の浮動小数点数です。0.0 のように小数点（ドット）を入れると Double で扱います。初期値は 0.0 です。</p>
+<code><pre>
+y = 678.9
+z = 0.0
+</pre></code>
+
+<h4>符号反転</h4>
+<p>マイナスの値は、(-1) のように括弧で囲って下さい。
+  変数値を符号反転する場合も括弧で囲います。</p>
+<code><pre>
+x = (-567) + 15
+y = (-x)
+</pre></code>
+
+<h4>String</h4>
+<p>"（ダブルクォーテーション）で囲った範囲を文字列として扱います。\ 文字はエスケープシーケンスとして特殊文字を扱えます。初期値は "" （空文字）です。</p>
+<code><pre>
+text = "Hello " + "World !"
+</pre></code>
+
+<h4>Boolean</h4>
+<p>条件文などで使われる正否を値として扱います。true と false キーワードで値を表します。初期値は false です。</p>
+
+<h4>計算式の中での型変換について</h4>
+<p>計算式のデータ型が違う場合、基本的に左辺のデータの型に右辺のデータを変換して処理します。
+  ただし、Int 型と Double 型の場合、左辺が Int 型であっても Double 型に変換して計算します。
+
+<h4>List</h4>
+<p>一連の値を格納するデータです。値は listOf キーワードのあと ( ) 括弧で囲い,、カンマで値を区切ります。初期値は空のリストです。
+  現状は一連の値の型をチェックしていませんので、様々な値が入ります。</p>
+<code><pre>
+box = listOf("Sum", "Meary", "Henry")
+name = box[index]
+</pre></code>
+
+<h4>Image</h4>
+<p>後述するライブラリに読み込んだイメージを扱います。
+型宣言の Image の引数に、ライブラリで登録した名前を文字列で指定して、$m.drawText メソッドで表示します。</p>
+<code><pre>
+var img: Image("sampleImage")
+while (! img.isLoaded()) {}
+$m.drawImage(img, 300, 300, 100, 100)
+$m.drawUp()
+</pre></code>
+<h5>isLoaded 関数 <span> fun isLoaded(): Boolean </span></h5>
+<p>イメージのロードはバックグラウンドで処理しますので、isLoaded メソッドで読み込みが完了しているかチェックする必要があります。</p>
+<h5>width, height 関数 <span> fun width(): Int;  fun height(): Int </span></h5>
+<p>画像の大きさを返します。</p>
+<h5>crop メソッド <span> fun crop(l: Int, t: Int, r: Int: b: Int) </span></h5>
+<p>画像のどの部分を使用するか指定できます。
+画像の左上を起点に、l,t で使用する部分の左上を、r,b で右下を指定します。</p>
+
+
+
+<h3>識別子</h3>
+<p>変数や関数名に使用する識別子は、英字または記号の $ # _ で始まり、2文字目以降は数字も使用できます。</p>
+
+<h4>予約語</h4>
+<p>文法を構成する予約語は識別子に使用できません。予約語は次の通りです。</p>
+<p> class, fun, super, this, return, init, var, const, if, for, while, else, break, true, false, listOf </p>
+<p>また、次のキーワードは将来使用のため予約語に入ります。</p>
+<p> when </p>
+
+
+
+<h3>変数</h3>
+<p>var キーワードに続いて予約語以外の一意の識別子を記述して、: のあとにデータ型を宣言します。
+  初期値を指定したい場合には、変数宣言時にデータ型のあとに ( ) 括弧で囲んだ値や式を記述します。
+  変数名は : で区切られるまで複数記述できます。
+  var による変数宣言は、変数を使用する前に宣言する必要があります。
+  変数のスコープ範囲は、グローバル、クラス内、関数内で、{ } 内のローカルスコープには対応していません。</p>
+  <code><pre>
+  var x, y : Double
+  </pre></code>
+
+
+
+<h3>定数</h3>
+<p>const キーワードにより、データに識別子を割り当てられます。</p>
+<code><pre>
+const x = 100
+const text = "Hello World!"
+</pre></code>
+
+
+
+  <h3>関数</h3>
+  <p>現状では関数の区別はキーワードのみで行います。引数のデータ型は型の合致をチェックしますが、関数の区別には使用していません。
+  引数が無い場合でも、 ( ) 括弧の記述は宣言時にも呼び出しの時にも必要です。</p>
+  <code><pre>
+  fun calc(x: Double, y: Double) : Double {
+    var z : Double
+    z = x * y
+    return (z)
+  }
+  </pre></code>
+ 
+ <h4>関数の返り値</h4>
+ <p>関数宣言の始めで、括弧で囲んだ引数の後に、: をはさんで返り値の型を指定します。返り値がない場合は省略します。
+ return 文の実行により、関数の終了と返り値を指定します。返り値は ( ) 括弧で囲うことを省略出来ませんが、
+ 返り値が無い関数の場合には、( ) 括弧ごと省略できます。</p>
+  
+  <h3>関数の引き渡しについて</h3>
+  <P>関数を引数として渡したり、無名関数など、関数を値として代入することは現状出来ません。</p>
+
+
+
+<h3>クラス</h3>
+<p>スーパークラスを指定して継承とオーバーラップの出来る簡素なクラスを記述できます。
+変数宣言の型指定で、クラス名に続けて ( ) 括弧で囲んだ引数を指定すると、init メソッドを生成時に呼び出します。
+引数無しでもクラス名に ( ) 括弧を付ければ init メソッドは呼び出され、( ) 括弧の無い宣言では init 文の記述の必要はありません。</p>
+<code><pre>
+class CardItem {
+  var name, gender : String
+  var age : Int
+  init(name: String, gender: String, age: Int) {
+    this.name = name
+    this.gender = gender
+    this.age = age
+  }
+  fun print() {
+    var text : String
+    text = name + ", " + gender + ", age=" + age.toString()
+    $m.print(text)
+  }
+}
+var card : CardItem("Sum", "male", 27)
+card.print()
+</pre></code>
+<p>現状では、クラスの中の子クラスは定義出来ません。</p>
+
+<h4>メソッド</h4>
+<p>クラスに定義されたデータに関連する関数をクラス内に定義します。</p>
+
+
+
+<h3>演算子</h3>
+<p>演算子は内部的に、割り当てられた識別子のメソッドに変換します。
+対応するメソッドをクラスに実装すれば、演算子をインスタンスにも使用できます。</p>
+
+<h4> <span> ++ </span> <span> $incFront </span></h4>
+<p>値を取り出してから変数値を 1 加算します。対象オブジェクトを前に記述します。 value ++ など。</p>
+
+<h4> <span> ++ </span> <span> $incRear </span> </h4>
+<p>対象オブジェクトを 1 加算してから値を取り出します。対象オブジェクトを後に記述します。 ++ value など。</p>
+
+<h4> <span> -- </span> <span> $decFront </span> </h4>
+<p>値を取り出してから変数値を 1 減算します。対象オブジェクトを前に記述します。 value -- など。</p>
+
+<h4> <span> -- </span> <span> $incRear </span> </h4>
+<p>対象オブジェクトを 1 減算してから値を取り出します。対象オブジェクトを後に記述します。 -- value など。</p>
+
+<h4> <span> ! </span> <span> $not </span> </h4>
+<p>条件値を反転します。 !true == false など。</p>
+
+<h4> <span> * </span> <span> $multi </span> </h4>
+<p>乗算です。</p>
+
+<h4> <span> / </span> <span> $div </span> </h4>
+<p>除算です。</p>
+
+<h4> <span> % </span> <span> $mod </span> </h4>
+<p>剰余です。</p>
+
+<h4> <span> + </span> <span> $add </span> </h4>
+<p>加算です。</p>
+
+<h4> <span> - </span> <span> $sub </span> </h4>
+<p>減算です。</p>
+
+<h4> <span> - </span> <span> $minus </span> </h4>
+<p>符号反転です。</p>
+
+<h4> <span> < </span> <span> $moreSmall </span> </h4>
+<p>A が B より小さければ true となります。</p>
+
+<h4> <span> > </span> <span> $moreLarge </span> </h4>
+<p> A が B より大きければ true となります。</p>
+
+<h4> <span> <= </span> <span> $small </span> </h4>
+<p>A が B と同じか小さければ true となります。</p>
+
+<h4> <span> >= </span> <span> $large </span> </h4>
+<p> A が B と同じか大きければ true となります。</p>
+
+<h4> <span> == </span> <span> $equal </span> </h4>
+<p> A が B と同じであれば true となります。</p>
+
+<h4> <span> != </span> <span> $notEqual </span> </h4>
+<p> A が B と違えば true となります。</p>
+
+<h4> <span> && </span> <span> $and </span> </h4>
+<p>条件式で、 A かつ B が true であれば true となります。</p>
+
+<h4> <span> || </span> <span> $or </span> </h4>
+<p>条件式で、 A または B が true であれば true となります。</p>
+
+<h4> <span> = </span> <span> $set </span> </h4>
+<p>右辺の値を左辺に代入します。</p>
+
+<h4> <span> += </span> <span> $addSet </span> </h4>
+<p>右辺と左辺を加算して左辺に代入します。</p>
+
+<h4> <span> -= </span> <span> $subSet </span> </h4>
+<span>左辺から右辺の値を減算して左辺に代入します。 </p>
+
+
+
+<h3>計算式</h3>
+<p>算術関数など、一般的に関数として定義されているものは、現状ではデータ型のメソッドとして実装しています。</p>
+
+<h4>Int 型の算術</h4>
+<h5>演算子</h5>
+<p><span> ++, --, +, -, *, /, %, ==, !=, <, >, <=, >=, =, +=, -= </span></p>
+<h5>メソッド</h5>
+<p><span> abs, toString, toDouble </span></p>
+
+<h4>Double 型の算術</h4>
+<h5>演算子</h5>
+<p><span> ++, --, +, -, *, /, %, ==, !=, <, >, <=, >=, =, +=, -= </span></p>
+<h5>メソッド</h5>
+<p><span> abs, acos, asin, atan, cos, sin, tan, ceil, floor, round, sqrt, toDegrees, toRadians, exp, pow, log, toString, toInt </span></p>
+
+<h4>String 型の算術</h4>
+<h5>演算子</h5>
+<p><span> +, -, *, /, %, ==, !=, <, >, <=, >=, =, +=, -= </span></p>
+<h5>メソッド</h5>
+<p><span> charAt, contains, indexOf, length, substring, lowercase, uppercase, toInt, toDouble </span></p>
+
+<h4>Boolean 型の算術</h4>
+<h5>演算子</h5>
+<p><span> <, >, <=, >=, ==, !=, !, &&, ||, =</span></p>
+
+<h4>List 型の算術</h4>
+<h5>演算子</h5>
+<p><span> +, -, =, +=, -=</span></p>
+<h5>メソッド</h5>
+<p><span> item, removeAt, addList, size, clear, append </span></p>
+<p>通常の算術では、リスト内の要素を連結したり削除します。リスト内にリストを付けるには addList を使用します。</p>
+<p>要素の参照として、item メソッドと同じ動作をする [ ] 括弧を記述できます。<p>
+<code><pre>
+  var box : List
+  box = listOf(
+       listOf("aaa", "bbb", "ccc"),
+       listOf("Sum", "Meary", "Henry"),
+       listOf("ddd", "eee", "fff")
+  )
+  $m.print(box[1][1])
+</pre></code>
+
+
+
+<h3>条件文と繰り返し文</h3>
+
+<p>処理の制御に、if 文、while 文、 for 文、when 文が記述できます。</p>
+
+<h4>if 文</h4>
+
+<p>if (条件式) 正しい場合の処理 else 違い場合の処理 、といったように、一般的な記述で行えます。
+処理が複数の場合は、{ } 括弧で囲います。</p>
+
+<code><pre>
+if (x > y)
+    z = x - y
+else
+    z = y - x
+
+if (z > 0) {
+    z = z * z
+    $m.print(z)
+}
+</pre></code>
+
+<h4>while 文</h4>
+
+<p>while (条件式) 繰り返し処理 、と一般的な記述です。</p>
+
+<code><pre>
+x = 0
+cnt = 1
+while (cnt <= 10) {
+    x = x + cnt
+    cnt ++
+}
+</pre></code>
+
+<h4>for 文</h4>
+
+<p>for (初期式 : 条件式 : 繰り返し式) 繰り返し処理 、 と、C言語の記述と同様です。
+分割記号は、 ; でなく、 : になります。初期式、繰り返し式は1つだけ記述出来ます。</p>
+
+<code><pre>
+x = 0
+for (cnt = 1 : cnt <= 10 : cnt ++) {
+    x += cnt
+}
+</pre></code>
+
+<h4>when 文</h4>
+
+<p>when 文は、Kotlinの記述を参考にしました。
+if 文や when 文は、代入式の右辺にも使えますが、シンプルな解析処理の関係で、文を ( ) 括弧で囲う必要があります。 </p>
+
+<code><pre>
+when (name) {
+    "Sum", "Mary", "Henry" ->
+         text = "Thanks! " + name
+    "Robinson" -> {
+        text = "Thank you"
+        text += " Mrs." + name
+    }
+    else ->
+        text = "Thank you"
+}
+</pre></code>
+
+
+
+<h3>Main クラス</h3>
+<p>グローバルフィールドのプログラムを実行した後に、 Main クラスを探します。
+  Main クラスが存在する場合、オブジェクト main を生成して run メソッドを呼び出します。
+  Main クラスには、タイマー処理やタップ処理を記述するメソッドが用意されています。</p>
+
+<h4>timer メソッド <span>fun timer(iv: Int)</span></h4>
+<p>$m.setTimer メソッドにより設定した間隔で、main オブジェクトの timer メソッドが呼び出されます。
+プログラムが実行中の場合は呼ばれずパスされます。
+引数には前回呼び出した時からの経過時間（ミリ秒）が渡されますので、何コマ目か確認できます。</p>
+
+<h4>onTap メソッド <span>fun onTap(x: Double, y: Double)</span></h4>
+<p>$m.tapAction メソッドでタップを有効にすると、キャンバス画面のタップアクションをキャッチできます。</p>
+
+<h4>canvasChanged メソッド <span>fun canvasChanged()</span></h4>
+<p>画面の回転など、画面サイズが変わったときに呼び出されます。$m.canvasWidth(), $m.canvasHeight() でサイズを確認します。</p>
+
+
+
+<h3>$m オブジェクト</h3>
+<p>プログラムの基本的な機能を $m オブジェクトのメソッドとして実装しています。
+将来的には、ラッパークラスにより直接は呼び出ししなくてもよくなる予定です。</p>
+
+<h4>print メソッド <span>fun print(text: String)</span></h4>
+<p>ホーム画面のコンソールにテキストを表示します。</p>
+
+<h4>canvasWidth メソッド <span>fun canvasWidth(): Double</span></h4>
+<p>キャンバスサイズの横幅を返します。画面回転などで変化します。</p>
+
+<h4>canvasHeight メソッド <span>fun canvasHeight(): Double</span></h4>
+<p>キャンバスサイズの縦の高さを返します。画面回転などで変化します。</p>
+
+<h4>drawCircle メソッド <span>fun drawCircle(r: Double, x: Double, y: Double)</span></h4>
+<p>キャンバスに円を描きます。引数の r は半径、x, y はキャンバス上の中心点です。</p>
+
+<h4>drawLine メソッド <span>fun drawLine(x1: Double, y1: Double, x2:Double, y2: Double)</span></h4>
+<p>キャンバスに線を描きます。x1,y1の始点と x2,y2 の終点を引数に渡します。</p>
+
+<h4>drawRect メソッド <span>fun drawRect(l: Double, t: Double, w: Double, h: Double)</span></h4>
+<p>キャンバスに四角を描きます。l, t で四角の左と上、 w, h で幅と高さを指定します。</p>
+
+<h4>drawImage メソッド <span>fun drawImage(image: Image, l: Int, t: Int, w: Int, h: Int)</span></h4>
+<p>キャンバスに画像を表示します。l, t で画像の左上を指定して、 画像の大きさに関係なく w, h で表示する幅と高さを指定します。</p>
+
+<h4>drawText メソッド <span>fun drawText(text: String, l: Int, t: Int)</span></h4>
+<p>キャンバスに text で指定する文字列を表示します。
+文字列の左上の座標を l,t で指定する文字列を指定します。
+その他の装飾は、 setTextStyle メソッドで指定できます。
+文字列の色は、 setColor で指定した色になります。</p>
+
+<h4>fillCanvas メソッド <span>fun fillCanvas(r: Double, g: Double, b:Double)</span></h4>
+<p>キャンバスを指定の色で塗りつぶします。</p>
+
+<h4>drawUp メソッド <span>fun drawUp()</span></h4>
+<p>上記の描画コマンドは一旦リストに蓄えられ、drawUp メソッドの呼び出しにより一度にキャンバスに描画します。
+描画後、リストはクリアされます。</p>
+
+<h4>newDrawing メソッド <span>fun newDrawing()</span></h4>
+<p>描画リストをクリアします。</p>
+
+<h4>setColor メソッド <span>fun setColor(r: Double, g: Double, b: Double)</span></h4>
+<p>描画コマンドで使用する色を指定します。r,g,b は赤、緑、青、0から1の実数で、初期値は(0.5, 0.5, 0.5)です。</p>
+
+<h4>setStroke メソッド <span>fun setStroke(w: Double)</span></h4>
+<p>drawLineで描く線の幅を指定します。</p>
+
+<h4>setAlpha メソッド <span>fun setAlpha(a: Double)</span></h4>
+<p>描画コマンドで使用する色のアルファ値を指定します。0から1の値です。初期値は塗りつぶしの1です。</p>
+
+<h4>setTextStyle メソッド <span>fun setTextStyle(size: Int, weight: Int, style: String, family: String, deco: String)</span></h4>
+<p>drawText で表示する文字列の装飾設定を変更します。
+size で文字の大きさを指定します。（androidプログラミングでの sp の値になります。）
+weight で文字の太さを指定します。初期値は 400 で扱います。
+style は斜体の指定です。 "normal", "italic" のいずれかです。
+family はフォントです。 "default", "sans", "serif" のいずれかです。
+deco は下線などの装飾です。 "none", "underline", "lineThrough" のいずれかです。
+後ろ3種は、設定以外の文字列では値の変更は行いません。
+例えば、 ”” （空文字） を指定すれば値の変更はしません。</p>
+
+<h4>random メソッド <span>fun random(max: Double): Double</span></h4>
+<p>ランダム値を 0 から max の範囲の Double 値で返します。</p>
+
+<h4>pi メソッド <span>fun pi(): Double</span></h4>
+<p>円周率を Double 値で返します。</p>
+
+<h4>setTimer メソッド <span>fun setTimer(ms: Int)</span></h4>
+<p>ミリ秒の引数で指定したインターバルのタイマー処理を設定します。</p>
+
+<h4>cancelTimer メソッド <span>fun cancelTimer()</span></h4>
+<p>タイマー処理を停止します。</p>
+
+<h4>tapAction メソッド <span>fun tapAction(flag: Boolean)</span></h4>
+<p>引数 true でタップアクションを受け取れるようになり、false でオフになります。</p>
+
+
+
+<h3>ライブラリ</h3>
+<p>イメージファイルをあらかじめアプリに読み込んでおくことでイメージを表示できるようになりました。
+ホーム画面右上のツールボタンでライブラリに移動します。
+ロードボタンで端末内の共有できる画像を選択して、プログラム内から呼び出すときに使用する名前を付けて保存します。</p>
+
+
+
+<h2>アプリのセッティング</h2>
+<p>なるべく安全にプログラムを実行出来るように、タイマー間隔の最小値と、 for 文や while 文のループ回数の制限を設定出来ます。
+  ホーム画面の上部バー右端のアイコンで設定画面に移動して、各値を変更できます。</p>
+
+</section>
+
+
+
+<section id="info">
+
+<h2>更新情報</h2>
+
+<h4>2024/8/13 - アプリ配布の中止</h4>
+<p>Google Play からのアプリの配布を中止して、GitHub にてソースコードを公開することにしました。</p>
+
+<h4>2024/6/17 - イメージと文字列の描画ができるようになりました</h4>
+
+<h4>2023/11/18 - サンプルプログラムのページを始めました</h4>
+<p>サンプルページ始めました。サンプルプログラムを通じてプログラミングを解説いたします。初回は、
+<a href="sample_tutorial.html" alt="go to Sample page">サンプル１・落ちるボール</a>です。</p>
+
+<h4>2023/11/9 - Ver. 1.1 アップデート、Google Play にて試験公開始まりました。</h4>
+<p>when 文を実行出来るようになりました。
+また、変数宣言の変数名の羅列に、一般的な , カンマで区切れるようになりました。
+ガイドページに、条件文、繰り返し文の記述がありませんでしたので、 when 文と合わせて追記しました。
+同じくガイドページの Double の算術メソッドで、pow と log の記述が抜けていましたので追記しました。</p>
+
+
+
+<h2>問題点、改善点について</h2>
+
+<h3>関数呼び出しの制限</h3>
+<p>関数の再帰呼び出しなどで、実行している関数の数がある程度を超えるとアプリがダウンしてしまいます。
+対策として呼び出している関数の数に制限を設けました。初期値は1000です。</p>
+
+<h3>エラーメッセージについて</h3>
+<p>現状では、あまり適切なエラーメッセージを出せていません。必要最小限ではありますが、デバッギングに役立つ適切なメッセージに今後改善したい点です。</p>
+
+<h3>ライブラリについて</h3>
+<p>配布された共有パッケージの登録や、イメージの呼び出しのために、ライブラリのような構造を検討中です。</p>
+
+</section>
+
+</article>
+
+
+
+<footer>
+
+<p>product : Dull Blue Lab / Kimihiko Watanabe<br />
+mail : <a href="mailto:dullbluelab@gmail.com"> dullbluelab@gmail.com </a><br />
+address : Nishi-Ku Nagoya city Aichi pref. Japan </p>
+
+<p id="endtag">writen 2023/10 by Dull Blue Lab </p>
+
+</footer>
+
+</body>
+</html>
+

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width" />
+<title>Cormoo sample and tutorial</title>
+<link rel="stylesheet" href="styles.css" />
+
+</head>
+
+
+
+<body>
+
+<nav>
+
+<ul class="topbar">
+<li><a href="#content">content</a></li>
+<li><a href="#top">top</a></li>
+</ul>
+
+</nav>
+
+
+
+<header id="top">
+
+<h1>Cormoo sample & tutorial</h1>
+
+</header>
+
+
+
+<article id="content">
+
+<section>
+
+<h2>サンプル１＝落ちるボール</h2>
+
+<p>Cormoo でアニメーションのように動作させるには、timer 機能を利用して、1コマずつ描画を更新して行います。
+例として、タップした位置にボールが発生して、画面下へと落下するプログラムを作ってみましょう。
+まずは、ボールに関する要素と動作をクラスにまとめてみましょう。</p>
+
+<code><pre>
+class Circle {
+  var x, y, ty : Double
+  var count, : Double
+  var r, g, b : Double
+  var flagActive : Boolean
+  
+  init() {
+    r = 0.0
+    g = 0.0
+    b = 1.0
+    flagActive = false
+  }
+  
+  fun active() {
+    return (flagActive)
+  }
+  
+  fun fall() {
+    count ++
+    ty = y + G * count.pow(2) / 2
+    if (ty > $m.canvasHeight()) {
+      flagActive = false
+    }
+  }
+  
+  fun draw() {
+    $m.setColor(r, g, b)
+    $m.drawCircle(RADIUS, x, ty)
+    $m.drawUp()
+  }
+  fun create(nx: Double, ny: Double) {
+    x = nx
+    y = ny
+    count = 0.0
+    flagActive = true
+  }
+}
+</pre></code>
+
+<p>加速していく落下位置を、ty = y + G * count.pow(2) / 2 として計算しています。
+pow(2) メソッドは2乗です。これを呼び出す Main クラスは次の通りです。
+G の値は、1/20秒のコマ間での画面上の速度で考えてください。</p>
+
+<code><pre>
+const G = 4.9
+const TIMER_COUNT = 50
+const RADIUS = 100
+
+class Main {
+  var circle : Circle()
+  
+  fun run() {
+    $m.setTimer(TIMER_COUNT)
+    $m.tapAction(true)
+  }
+  
+  fun timer(iv: Int) {
+    if (circle.active()) {
+      circle.fall()
+      if (circle.active()) circle.draw()
+    }
+  }
+  
+  fun onTap(x: Double, y: Double) {
+    circle.create(x, y)
+    circle.draw()
+  }
+}
+</pre></code>
+
+<p>1/20秒間隔で、落下するボールの位置を計算して、１コマずつ描画していきます。</p>
+
+<p>次に、画面下端でバウンドするようにしてみましょう。
+ボールの位置を計算する Circle クラスの fall メソッドは次のようになります。</p>
+
+<code><pre>
+  fun fall() {
+    count ++
+    if (bspeed > 0.0) {
+      bcount ++    
+      ty = y - (bspeed * bcount) + G * count.pow(2) / 2
+    }
+    else {
+      ty = y + G * count.pow(2) / 2
+    }
+    if (ty > $m.canvasHeight()) {
+      if (bspeed > 0.0) count = count / 2
+      bspeed = G * (count - 1)
+      bcount = 1
+      count = 1
+      y = $m.canvasHeight()
+      ty = y - (bspeed * bcount) + G * count.pow(2) / 2
+    }
+  }
+</pre></code>
+
+<p>出来上がったプログラムをダウンロードしてみてください。</p>
+
+<p><a href="resource/sample-5.txt" download="sample-5.txt">sample-5.txt</a></p>
+
+<p>このプログラムには一つ問題があります。実行してみると、バウンドごとに少しずつ減衰していきます。
+反発速度の計算が、ボトムに着いた時の落下速度では無く、落下手前の近似値だからです。
+出来ましたら、このプログラムをさらに改良してみてください。</p>
+
+<section>
+
+
+
+<section>
+
+<h2>tip 1 ＝ オブジェクト指向でのプログラミング</h2>
+
+<p>オブジェクト指向とは、物事の要素と動作をひとくくりに纏めて考えていく手法です。
+それぞれの物事の共通点を見出せば、それを編成してクラスというデータセットを定義できて、
+そのクラスの組み合わせでプログラムを構成していきます。</p>
+
+<p>サンプル１の Circle クラスは、少しの改良で、複数生成して画面に多数ボールを表示することも出来ます。
+複数表示するためのグループを管理するクラスも必要でしょう。
+クラスに定義された要素（データ）は、変数宣言で Int などデータ型と同様に新しいデータエリアが割り当てられます。
+クラスは独自に定義できるオリジナルのデータセットとも言えます。</p>
+
+</section>
+
+</article>
+
+
+
+<footer>
+
+<p id="endtag">writen 2023/11 by Dull Blue Lab </p>
+
+</footer>
+
+</body>
+</html>
+

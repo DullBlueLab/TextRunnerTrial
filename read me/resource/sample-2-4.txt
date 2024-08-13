@@ -1,0 +1,109 @@
+const MinSize = 100
+const CircleSize = 100
+const TimerCycle = 1000
+
+class CircleItem {
+  var r, g, b, rd, x, y : Double
+
+  init() {
+    var w, h : Double
+    r = $m.random(1)
+    g = $m.random(1)
+    b = $m.random(1)
+    rd = $m.random(CircleSize) + MinSize
+    w = $m.random($m.canvasWidth())
+    h = $m.random($m.canvasHeight())
+    if ($m.canvasWidth() >= $m.canvasHeight()) {
+      x = w
+      y = h
+    }
+    else {
+      y = w
+      x = h
+    }
+  }
+
+  fun draw() {
+    $m.setColor(r, g, b)
+    if ($m.canvasWidth() >= $m.canvasHeight()) {
+      $m.drawCircle(rd, x, y)
+    }
+    else {
+      $m.drawCircle(rd, y, x)
+    }
+  }
+
+  fun hit(tx: Double, ty: Double) : Boolean {
+    var flag : Boolean
+    var sx, sy, sh : Double
+    if ($m.canvasWidth() >= $m.canvasHeight()) {
+      sx = (x - tx).abs()
+      sy = (y - ty).abs()
+      sh = (sx * sx + sy * sy).sqrt()
+    }
+    else {
+      sx = (x - ty).abs()
+      sy = (y - tx).abs()
+      sh = (sx * sx + sy * sy).sqrt()
+    }
+    if (sh < rd) flag = true else flag = false
+    return (flag)
+  }
+}
+
+class CircleList {
+  var list : List
+
+  fun appendItem() {
+    var item : CircleItem()
+    list += item
+  }
+
+  fun draw() {
+    var cnt : Int
+    cnt = 0
+    while (cnt < list.size()) {
+      list[cnt].draw()
+      cnt ++
+    }
+    $m.drawUp()
+  }
+
+  fun hit(tx: Double, ty: Double) : Int {
+    var cnt, score : Int
+    score = 0
+    cnt = 0
+    while (cnt < list.size()) {
+      if (list[cnt].hit(tx, ty)) {
+        list.removeAt(cnt)
+        score ++
+      }
+      cnt ++
+    }
+    return (score)
+  }
+}
+
+class Main {
+  var circleList : CircleList
+  var score : Int
+
+  fun run() {
+    $m.setTimer(TimerCycle)
+    $m.tapAction(true)
+  }
+
+  fun timer(iv: Int) {
+    circleList.appendItem()
+    circleList.draw()
+  }
+
+  fun onTap(x: Double, y: Double) {
+    var s : Int
+    s = circleList.hit(x, y)
+    if (s > 0) {
+      score += s
+      circleList.draw()
+    }
+  }
+}

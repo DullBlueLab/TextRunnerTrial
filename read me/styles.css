@@ -1,0 +1,96 @@
+
+body {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.topbar {
+  position: fixed;
+  display: flex;
+  background-color: #DEE1F9;
+  color: #595D72;
+  padding: 4px;
+  width: 100%;
+  max-width: 952px;
+  margin: 0;
+  top: 0;
+}
+
+.topbar > li {
+  flex: 1;
+  text-align: center;
+  font-size: 0.75em;
+  list-style-type: none;
+}
+
+.topbar a {
+  text-decoration: none;
+  color: #595D72;
+  font-weight: bold;
+}
+
+header h1 {
+  padding: 1em 0.5em 0;
+}
+
+header h2 {
+  padding: 2em 1em 0;
+}
+
+header h3 {
+  padding: 0em 1.5em;
+}
+
+header p {
+  padding: 0 2em;
+}
+
+#headimg {
+  width: 100%;
+}
+
+article {
+  padding: 0 1em;
+}
+
+aside {
+  padding: 0 1em;
+}
+
+h1 {
+}
+
+h2 {
+  padding-top: 3em;
+}
+
+h3 {
+  margin-top: 2em;
+}
+
+code {
+  line-height: 1.2em;
+}
+
+pre {
+  width: 95%;
+  padding: 1em;
+  max-width: 952px;
+  overflow-x: scroll;
+}
+
+footer {
+  padding: 3em 1em;
+}
+
+.iconimg {
+  position: relative;
+  top: 0.5em;
+  width: 2em;
+  height: 2em;
+}
+
+#endtag {
+  padding: 3em 0 0;
+  text-align: center;
+}
